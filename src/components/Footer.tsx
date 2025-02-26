@@ -1,81 +1,51 @@
 import React from "react";
-import { Mail, Twitter, Instagram, Shield } from "lucide-react";
+import { Twitter, Instagram, Shield } from "lucide-react";
+import { getNavLinks } from "@/constants/navLinks";
+import SocialIcons from "./SocialIcons";
 
 const Footer = () => {
+  const navLinks = getNavLinks();
+
   return (
-    <footer className="bg-gradient-to-t from-gray-900 to-purple-900 text-white py-10 border-t-0">
-      <div className="container mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-8">
-        {/* Brand Info */}
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <Shield className="text-purple-400" size={24} />
-            <h2 className="text-xl font-bold">NFTs Guard</h2>
+    <footer className="px-6 max-w-7xl mx-auto text-white py-10 border-t-0">
+      <div className="container mx-auto flex flex-col lg:flex-col items-center text-center gap-6">
+        {/* 🌟 Galvenā sadaļa (lielā ekrāna rinda, mazā ekrāna kolonna) */}
+        <div className="w-full flex flex-col lg:flex-row justify-between gap-6 items-center lg:gap-12">
+          {/* 🔹 Logo */}
+          <div className="flex items-center gap-2">
+            <Shield className="text-purple-400" size={28} />
+            <h2 className="text-2xl font-bold">NFTs Guard</h2>
           </div>
-          <p className="text-gray-400">
-            Protecting your NFTs from scams with real-time verification and
-            advanced blockchain analysis.
-          </p>
-        </div>
 
-        {/* Quick Links */}
-        <div>
-          <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
-          <ul className="space-y-2">
-            <li>
-              <a href="#" className="hover:text-purple-400">
-                Home
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:text-purple-400">
-                About
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:text-purple-400">
-                Pricing
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:text-purple-400">
-                Premium
-              </a>
-            </li>
+          {/* 🔹 Navigācijas linki */}
+          <ul className="flex flex-wrap justify-center gap-6">
+            {navLinks.map((link) => (
+              <li key={link.name}>
+                <a
+                  href={link.href}
+                  className="text-md md:text-lg hover:text-purple-400"
+                >
+                  {link.name}
+                </a>
+              </li>
+            ))}
           </ul>
+
+          {/* 🔹 Sociālo tīklu ikonas */}
+          <div className="hidden lg:flex gap-6">
+            <SocialIcons icons={["twitter", "discord"]} />
+          </div>
         </div>
 
-        {/* Contact Info */}
-        <div>
-          <h3 className="text-lg font-semibold mb-4">Contact Us</h3>
-          <ul className="space-y-2">
-            <li className="flex items-center gap-2">
-              <Mail size={20} />
-              <a
-                href="mailto:support@nftguard.io"
-                className="hover:text-purple-400"
-              >
-                support@nftguard.io
-              </a>
-            </li>
-            <li className="flex items-center gap-2">
-              <Twitter size={20} />
-              <a href="#" className="hover:text-purple-400">
-                Twitter
-              </a>
-            </li>
-            <li className="flex items-center gap-2">
-              <Instagram size={20} />
-              <a href="#" className="hover:text-purple-400">
-                Instagram
-              </a>
-            </li>
-          </ul>
-        </div>
-      </div>
+        {/* 🌟 Copyright vienmēr ir atsevišķā rindā */}
+        <p className="text-gray-500 text-sm w-full text-center">
+          &copy; {new Date().getFullYear()} NFTs Guard. All rights reserved.
+        </p>
 
-      {/* Copyright */}
-      <div className="border-t border-gray-700 mt-8 pt-4 text-center text-gray-500">
-        &copy; {new Date().getFullYear()} NFTs Guard. All rights reserved.
+        {/* 🟣 Sociālie tīkli apakšā tikai uz mazajiem ekrāniem */}
+        <div className="lg:hidden flex">
+          <SocialIcons icons={["twitter", "discord"]} />
+        </div>
       </div>
     </footer>
   );
