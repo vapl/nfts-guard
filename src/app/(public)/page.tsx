@@ -7,7 +7,8 @@ import ScanForm from "@/components/ScanForm";
 import { useScan } from "@/context/ScanContext";
 import AuthModal from "@/components/modals/AuthModal";
 import { Clock, Shield, Zap } from "lucide-react";
-import HeroSection from "@/components/HeroSection";
+import HeroSection from "@/components/landing/HeroSection";
+import AboutSection from "@/components/landing/AboutSection";
 
 const MainPage: React.FC = () => {
   const { results, scanNFT, error, isLoading } = useScan();
@@ -26,11 +27,14 @@ const MainPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background bg-gradient-to-br from-gradientStart via-gradientMid to-gradientEnd text-foreground">
+    <div className="min-h-screen bg-background bg-gradient-to-br from-gradientStart via-gradientMid to-gradientEnd text-foreground pt-20">
       {/* Main Content */}
-      <main className="container max-w-7xl mx-auto px-6 pt-16 pb-16">
+      <main className="container max-w-7xl mx-auto px-0 md:px-6 pt-16 pb-16">
         {/* Hero Section */}
         <HeroSection />
+
+        {/* About section */}
+        <AboutSection />
 
         {/* Search Box */}
         {/* <div className="bg-card rounded-2xl p-6 border border-border shadow-lg mb-12">

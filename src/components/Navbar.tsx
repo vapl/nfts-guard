@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Menu, X, Shield } from "lucide-react";
 
 const navLinks = [
@@ -15,9 +15,28 @@ const navLinks = [
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 50) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
-    <nav className="bg-background dark:bg-background-dark text-text dark:text-white py-7 px-8 flex justify-between items-center shadow-lg font-sans">
+    <nav
+      className={`fixed w-full bg-background ${
+        isScrolled
+          ? "dark:bg-background-dark drop-shadow-lg transition duration-300 ease-in-out"
+          : "dark:bg-background-dark/50"
+      } text-text dark:text-white py-7 px-8 flex justify-between items-center shadow-lg z-50`}
+    >
       {/* Logo */}
       <div className="text-lg font-extrabold flex items-center">
         <Shield size={24} className="mr-2 text-accent-purple" />
@@ -49,7 +68,7 @@ export default function Navbar() {
       <div className="hidden md:block">
         <button className="relative bg-gradient-to-r from-purple-600 to-indigo-500 text-white px-6 py-2 rounded-full shadow-lg hover:opacity-80 transition">
           <span className="absolute inset-0 bg-black bg-opacity-20 rounded-full"></span>
-          <span className="relative z-10">Join Now</span>
+          <span className="relative z-10 text-nowrap">Join Now</span>
         </button>
       </div>
 
