@@ -1,0 +1,40 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+/* Sakārto krāsu mainīgos */
+:root {
+  --background-light: #ffffff;
+  --foreground-light: #0a0a0a;
+  --background-dark: #0a0a20;
+  --foreground-dark: #ededed;
+}
+
+/* Noklusētās tēmas krāsas */
+html {
+  font-family: var(--font-geist-sans);
+  background-color: var(--background-dark);
+  color: var(--foreground-dark);
+  transition: all 0.3s ease;
+}
+
+/* Gaišā tēma */
+html.light {
+  background-color: var(--background-light);
+  color: var(--foreground-light);
+}
+
+/* Tumšā tēma */
+html.dark {
+  background-color: var(--background-dark);
+  color: var(--foreground-dark);
+}
+
+/* Vispārējie stili */
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
