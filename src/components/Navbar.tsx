@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Menu, X, Shield } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { getNavLinks } from "@/constants/navLinks";
 import SocialIcons from "./SocialIcons";
+import Logo from "./logo/Logo";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -32,8 +33,7 @@ export default function Navbar() {
     >
       {/* Logo */}
       <div className="text-lg font-extrabold flex items-center">
-        <Shield size={24} className="mr-2 text-accent-purple" />
-        <span className="text-white">NFTs Guard</span>
+        <Logo textSize={20} size={40} />
       </div>
 
       {/* Navigācija */}
@@ -88,7 +88,7 @@ export default function Navbar() {
               </li>
             ))}
           </ul>
-          <div className="flex w-full h-full p-6 justify-center self-end">
+          <div className="flex w-full p-6 justify-center self-end">
             <SocialIcons icons={["twitter", "discord"]} />
           </div>
         </div>

@@ -1,7 +1,7 @@
 import React from "react";
-import { Twitter, Instagram, Shield } from "lucide-react";
 import { getNavLinks } from "@/constants/navLinks";
 import SocialIcons from "./SocialIcons";
+import Logo from "./logo/Logo";
 
 const Footer = () => {
   const navLinks = getNavLinks();
@@ -13,8 +13,7 @@ const Footer = () => {
         <div className="w-full flex flex-col lg:flex-row justify-between gap-6 items-center lg:gap-12">
           {/* 🔹 Logo */}
           <div className="flex items-center gap-2">
-            <Shield className="text-purple-400" size={28} />
-            <h2 className="text-2xl font-bold">NFTs Guard</h2>
+            <Logo textSize={20} size={40} />
           </div>
 
           {/* 🔹 Navigācijas linki */}
