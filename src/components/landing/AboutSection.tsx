@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 
 export default function AboutSection() {
   return (
-    <section className="w-full py-36 px-6 lg:px-16 xl:px-0">
+    <section id="about" className="w-full py-36 px-6 lg:px-16 xl:px-0">
       <div className="flex flex-col-reverse md:flex-row items-center gap-24">
         {/* 🔵 Kreisā puse - bilde ar dekorācijām */}
         <div className="relative flex justify-center basis-1/2">
