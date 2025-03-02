@@ -3,6 +3,7 @@ import { defaultMetadata } from "@/app/metadata";
 import { ScanProvider } from "@/context/ScanContext";
 import { ThemeProvider } from "next-themes";
 import "@/app/globals.css";
+import { LayoutProps } from "@/types/layout";
 
 // Fontu inicializācija
 const geistSans = Geist({
@@ -23,14 +24,12 @@ const michroma = Michroma({
 
 export const metadata = defaultMetadata;
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function RootLayout({ children, params }: LayoutProps) {
+  const { locale } = await params;
+
   return (
     <html
-      lang="en"
+      lang={locale}
       className={`${geistSans.variable} ${geistMono.variable} ${michroma.variable}`}
     >
       <body className="antialiased bg-background text-text transition-colors duration-300">

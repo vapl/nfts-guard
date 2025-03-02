@@ -1,29 +1,23 @@
 "use client";
 
 import React, { useState } from "react";
-import ScanResultsFree from "@/components/modals/FreeScanModal";
 import ScamStatsBanner from "@/components/ScamStatsCard";
-import ScanForm from "@/components/ScanForm";
-import { useScan } from "@/context/ScanContext";
 import AuthModal from "@/components/modals/AuthModal";
 import { Clock, Shield, Zap } from "lucide-react";
 import HeroSection from "@/components/landing/HeroSection";
 import AboutSection from "@/components/landing/AboutSection";
+import FAQSection from "@/components/FaqSection";
+// import { useTranslations } from "@/context/TranslationContext";
 
 const MainPage: React.FC = () => {
-  const { results, scanNFT, error, isLoading } = useScan();
   const [showModal, setShowModal] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  // const { t } = useTranslations();
 
   // Open Register modal
   const openRegisterModal = () => {
     setAuthMode("register");
     setShowModal(true);
-  };
-
-  // NFT scan function
-  const handleScan = async (input: string) => {
-    await scanNFT(input);
   };
 
   return (
@@ -35,29 +29,6 @@ const MainPage: React.FC = () => {
 
         {/* About section */}
         <AboutSection />
-
-        {/* Search Box */}
-        {/* <div className="bg-card rounded-2xl p-6 border border-border shadow-lg mb-12">
-          <ScanForm onSubmit={handleScan} loading={isLoading} error={error} />
-          {results?.length > 0 && (
-            <>
-              <ScanResultsFree results={results} />
-              <div className="mt-6 text-center">
-                <p className="text-sm text-muted-foreground mb-4">
-                  This was your free trial scan. Register now to enjoy 3 free
-                  NFT scans daily, and upgrade to Premium anytime for unlimited
-                  access!
-                </p>
-                <button
-                  onClick={openRegisterModal}
-                  className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 px-6 py-2 rounded-lg"
-                >
-                  Start Free Scans
-                </button>
-              </div>
-            </>
-          )}
-        </div> */}
 
         {/* Key Benefits */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-8">
@@ -93,6 +64,7 @@ const MainPage: React.FC = () => {
 
         {/* SCAM stats */}
         <ScamStatsBanner />
+        <FAQSection />
 
         {/* Call to Action */}
         <div className="text-center py-10">

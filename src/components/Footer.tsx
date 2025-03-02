@@ -1,10 +1,17 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import { getNavLinks } from "@/constants/navLinks";
 import SocialIcons from "./SocialIcons";
 import Logo from "./logo/Logo";
 
 const Footer = () => {
   const navLinks = getNavLinks();
+  const [year, setYear] = useState<number | null>(null);
+
+  useEffect(() => {
+    setYear(new Date().getFullYear());
+  }, []);
 
   return (
     <footer className="px-6 max-w-7xl mx-auto text-white py-10 border-t-0">
@@ -38,7 +45,7 @@ const Footer = () => {
 
         {/* 🌟 Copyright vienmēr ir atsevišķā rindā */}
         <p className="text-gray-500 text-sm w-full text-center">
-          &copy; {new Date().getFullYear()} NFTs Guard. All rights reserved.
+          &copy; {year} NFTs Guard. All rights reserved.
         </p>
 
         {/* 🟣 Sociālie tīkli apakšā tikai uz mazajiem ekrāniem */}

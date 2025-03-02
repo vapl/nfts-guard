@@ -1,7 +1,9 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  /* config options here */
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+  images: {
+    domains: ["boredapeyachtclub.com", "larvalabs.com", "opensea.io"], // Pievieno visus NFT attēlu hostus
+  },
 };
 
-export default nextConfig;
+module.exports = nextConfig;

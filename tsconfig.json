@@ -5,6 +5,7 @@
     "jsx": "preserve",
     "strict": true,
     "moduleResolution": "node",
+    "types": [],
     "resolveJsonModule": true,
     "isolatedModules": true,
     "skipLibCheck": true,

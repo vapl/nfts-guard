@@ -6,7 +6,11 @@ import { useScan, Result } from "@/context/ScanContext";
 import Image from "next/image";
 
 interface ScanResultsFreeProps {
+  isOpen?: boolean;
   results: Result[];
+  onClose?: () => void;
+  onRegister?: () => void;
+  onUpgrade?: () => void;
 }
 
 const ScanResultsFree: React.FC<ScanResultsFreeProps> = ({ results }) => {

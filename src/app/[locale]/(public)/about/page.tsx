@@ -4,11 +4,13 @@ import React, { useState } from "react";
 import { ShieldCheck, TrendingUp, BarChart3 } from "lucide-react";
 import FreeScanModal from "@/components/FreeScanResult";
 import AuthModal from "@/components/modals/AuthModal";
+// import { useTranslations } from "@/context/TranslationContext";
 
 const AboutPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  // const { t } = useTranslations();
 
   // Open Register modal
   const openRegisterModal = () => {
@@ -39,6 +41,7 @@ const AboutPage = () => {
               onClose={() => setShowModal(false)}
               onRegister={() => alert("Navigācija uz reģistrāciju")}
               onUpgrade={() => alert("Navigācija uz Premium")}
+              results={[]}
             />
           )}
         </section>

@@ -70,7 +70,7 @@ export default function AboutSection() {
           <span className="bg-purple-700 bg-opacity-20 text-purple-400 text-sm px-4 py-1 rounded-full uppercase tracking-wider">
             Why NFTs Guard?
           </span>
-          <h2 className="text-5xl md:text-6xl font-extrabold leading-tight mt-4">
+          <h2 className="text-5xl md:text-6xl font-extrabold leading-tight mt-6">
             The Ultimate <span className="text-purple-400">NFT</span> Security
           </h2>
           <p className="text-lg text-gray-400 mt-6">
