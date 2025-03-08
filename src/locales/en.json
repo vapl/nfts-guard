@@ -1,0 +1,17 @@
+{
+  "landing": {
+    "hero-section": {
+      "title": "Secure Your NFTs On-Chain",
+      "description": "Launching soon! Try our FREE Demo Scan now and join the waitlist for full blockchain protection! Verify authenticity, detect scams instantly.",
+      "input": "Enter NFT contract address or token ID",
+      "cta": "Try Demo Scan"
+    }
+  },
+  "general": {
+    "language": {
+      "label": "Language",
+      "english": "English",
+      "spanish": "Spanish"
+    }
+  }
+}
