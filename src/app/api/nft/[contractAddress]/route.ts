@@ -1,35 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getNFTCollectionData, getNFTMetadata } from "@/lib/nft";
+import { getNFTCollectionData } from "@/lib/nft"; // ❌ Noņem getNFTMetadata
 
 export async function GET(
   request: NextRequest,
-  context: { params?: { contractAddress?: string; tokenId?: string } }
+  context: { params: Promise<{ contractAddress: string }> }
 ) {
-  console.log("✅ API Call Received! Params:", context.params);
-
-  const contractAddress = context.params?.contractAddress;
-  const tokenId = context.params?.tokenId || "1"; // Ja nav norādīts tokenId, izmanto pirmo NFT
+  const params = await context.params;
+  const { contractAddress } = params;
 
   if (!contractAddress) {
-    console.error("❌ Missing contract address!");
     return NextResponse.json(
-      { error: "Invalid or missing contract address" },
+      { error: "❌ Invalid or missing contract address" },
       { status: 400 }
     );
   }
 
-  console.log("🔹 Contract Address:", contractAddress, "Token ID:", tokenId);
+  console.log("🚀 Fetching NFT collection data for contract:", contractAddress);
 
   try {
     const collectionData = await getNFTCollectionData(contractAddress);
-    const nftMetadata = await getNFTMetadata(contractAddress, tokenId);
-
-    return NextResponse.json({
-      collection: collectionData,
-      nft: nftMetadata,
-    });
+    return NextResponse.json({ collection: collectionData });
   } catch (error) {
-    console.error("❌ Error fetching NFT data:", error);
+    console.error("❌ Error fetching NFT metadata:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

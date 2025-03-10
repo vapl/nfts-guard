@@ -1,121 +1,203 @@
-import { fetchNFTPriceHistory, fetchNFTFloorPrice } from "@/lib/nft";
+import { getNFTCollectionData, fetchNFTPriceHistory } from "@/lib/nft";
 
 /**
- * 🛠️ Wash trading analīzes funkcija
+ * Aprēķina wash trading risku, balstoties uz statistisko analīzi
+ */
+function analyzeWashTrading(trades: any[], floorPrice: number) {
+  if (trades.length < 5) return "Low";
+
+  const prices = trades.map((t) => t.trade_price);
+  const avgPrice = prices.reduce((sum, p) => sum + p, 0) / prices.length;
+  const variance =
+    prices.reduce((sum, p) => sum + Math.pow(p - avgPrice, 2), 0) /
+    prices.length;
+  const stdDev = Math.sqrt(variance);
+
+  const priceDeviation = Math.abs(avgPrice - floorPrice) / floorPrice;
+
+  console.log(
+    `📊 Avg Price: ${avgPrice.toFixed(2)}, Std Dev: ${stdDev.toFixed(
+      2
+    )}, Deviation from Floor: ${priceDeviation.toFixed(2)}`
+  );
+
+  if (priceDeviation > 0.3) return "High"; // Cena par 30% atšķiras no floor price
+  if (stdDev > avgPrice * 0.5) return "High";
+  if (stdDev > avgPrice * 0.2) return "Medium";
+
+  return "Low";
+}
+
+/**
+ * Pārbauda ping-pong darījumus pēc adresēm un NFT token ID
+ */
+function detectPingPongTrading(trades: any[]) {
+  const nftTransferHistory: Record<string, string[]> = {};
+  const pairInteractions: Record<string, number> = {};
+  const pingPongTrades: any[] = [];
+
+  trades.forEach((trade) => {
+    const { from, to, token_id } = trade;
+    const pairKey = [from, to].sort().join("-");
+
+    pairInteractions[pairKey] = (pairInteractions[pairKey] || 0) + 1;
+
+    if (!nftTransferHistory[token_id]) {
+      nftTransferHistory[token_id] = [];
+    }
+    nftTransferHistory[token_id].push(from, to);
+
+    if (pairInteractions[pairKey] > 2) {
+      pingPongTrades.push({
+        ...trade,
+        pingPongCount: pairInteractions[pairKey],
+      });
+    }
+  });
+
+  const suspiciousNFTs = Object.keys(nftTransferHistory).filter(
+    (tokenId) => new Set(nftTransferHistory[tokenId]).size <= 2
+  );
+
+  return {
+    pingPongTrades,
+    suspiciousNFTs,
+    suspiciousPairsCount: suspiciousNFTs.length,
+  };
+}
+
+/**
+ * Identificē ļoti ātrus darījumus (<10 min starplaiks)
+ */
+function detectQuickTrades(trades: any[]) {
+  const quickTrades = trades.filter((trade, index, array) => {
+    if (index === 0) return false;
+    const prevTrade = array[index - 1];
+    const timeDiff =
+      Math.abs(
+        new Date(trade.timestamp).getTime() -
+          new Date(prevTrade.timestamp).getTime()
+      ) / 1000;
+    return timeDiff < 600; // <10 min starplaiks
+  });
+
+  return quickTrades;
+}
+
+/**
+ * Identificē neparasti aktīvus kontus
+ */
+function detectHighFrequencyTrading(trades: any[]) {
+  const addressActivity: Record<string, number> = {};
+
+  trades.forEach(({ from, to }) => {
+    addressActivity[from] = (addressActivity[from] || 0) + 1;
+    addressActivity[to] = (addressActivity[to] || 0) + 1;
+  });
+
+  const totalActivity = Object.values(addressActivity).reduce(
+    (sum, count) => sum + count,
+    0
+  );
+  const averageActivity = totalActivity / Object.keys(addressActivity).length;
+
+  const suspiciousAddresses = Object.keys(addressActivity)
+    .filter((addr) => addressActivity[addr] > averageActivity * 3)
+    .map((addr) => ({
+      address: addr,
+      activityCount: addressActivity[addr],
+      timesAboveAverage: (addressActivity[addr] / averageActivity).toFixed(1),
+    }));
+
+  return { suspiciousAddresses, averageActivity };
+}
+
+/**
+ * Wash trading detektēšanas galvenā funkcija
  */
 export const detectWashTrading = async (
   contractAddress: string,
-  tokenId?: string
+  scanPeriod: "24h" | "7d" | "30d" | "6m" = "7d"
 ) => {
-  const tradeHistory = await fetchNFTPriceHistory(contractAddress, tokenId);
+  console.log(
+    `📡 Detecting wash trading for: ${contractAddress}, Period: ${scanPeriod}`
+  );
 
-  console.log("📊 Received trade history:", tradeHistory.length, "entries");
-  if (!tradeHistory || tradeHistory.length === 0) {
-    return { error: "⚠️ No trade history found or data is invalid" };
+  if (!contractAddress || typeof contractAddress !== "string") {
+    return { error: "❌ Invalid contract address" };
   }
 
-  // 🔹 Iegūst floor price kolekcijai
-  const floorPrice = await fetchNFTFloorPrice(contractAddress);
-  console.log(`🔹 Floor price: $${floorPrice}`);
+  const [collectionData, tradeHistory] = await Promise.all([
+    getNFTCollectionData(contractAddress),
+    fetchNFTPriceHistory(contractAddress, scanPeriod),
+  ]);
 
-  const suspiciousSellers = new Map<string, Set<string>>();
-  const tradePairs = new Map<string, number>();
-  const priceManipulationPairs: string[] = [];
-  const prices: number[] = [];
+  if (!tradeHistory.trades || tradeHistory.trades.length === 0) {
+    return {
+      washTradingRisk: "Low",
+      reason: "No trade history found",
+      totalTradeVolume: "0",
+      trades: [],
+      detailedAnalysis: null,
+    };
+  }
 
-  const priceThreshold = 0.05; // 5% svārstība
-  const floorPriceThreshold = 0.02; // 2% svārstība pret floor price
+  console.log(
+    `✅ Total trades before filtering: ${tradeHistory.trades.length}`
+  );
 
-  // ✅ Analizē darījumus
-  tradeHistory.forEach(({ from, to, event_type, trade_price }) => {
-    if (event_type !== "Sale") return;
-    if (from === to) return;
-    if (trade_price === 0) return;
+  const floorPriceData = await collectionData.floorPrice;
+  const floorPrice = Number(floorPriceData) || 0;
 
-    console.log(`🛠 Checking trade: ${from} → ${to} ($${trade_price})`);
-    prices.push(trade_price);
+  // ✅ Statistiskā analīze
+  const washTradingRisk = analyzeWashTrading(tradeHistory.trades, floorPrice);
 
-    // 🔹 Salīdzina ar floor price
-    if (Math.abs(trade_price - floorPrice) / floorPrice < floorPriceThreshold) {
-      console.warn(
-        `⚠️ Possible price manipulation! Trade at $${trade_price} is too close to floor price (${floorPrice})`
-      );
-      priceManipulationPairs.push(
-        `Trade at $${trade_price} is too close to floor price (${floorPrice})`
-      );
-    }
+  // ✅ Ping-pong un quick trades analīze
+  const pingPongAnalysis = detectPingPongTrading(tradeHistory.trades);
+  const highFrequencyAnalysis = detectHighFrequencyTrading(tradeHistory.trades);
+  const quickTrades = detectQuickTrades(tradeHistory.trades);
 
-    // Reģistrē pārdevējus
-    if (!suspiciousSellers.has(to)) {
-      suspiciousSellers.set(to, new Set());
-    }
-    suspiciousSellers.get(to)!.add(from);
+  // ✅ Wash Trading Severity Score
+  let severityScore = 0;
+  if (pingPongAnalysis.suspiciousPairsCount > 0) severityScore += 3;
+  if (highFrequencyAnalysis.suspiciousAddresses.length > 2) severityScore += 2;
+  if (quickTrades.length > 5) severityScore += 3;
+  if (washTradingRisk === "High") severityScore += 2;
 
-    // Reģistrē pārdošanas pārus
-    const pair = `${from}-${to}`;
-    const reversePair = `${to}-${from}`;
-    if (tradePairs.has(reversePair)) {
-      tradePairs.set(reversePair, (tradePairs.get(reversePair) || 0) + 1);
-    } else {
-      tradePairs.set(pair, (tradePairs.get(pair) || 0) + 1);
-    }
-  });
-
-  // 🚨 Anomāliju detektors ar Z-score
-  const zScores = calculateZScores(prices);
-  zScores.forEach((z, i) => {
-    if (Math.abs(z) > 2) {
-      console.warn(
-        `⚠️ Price anomaly detected! Trade price: $${
-          prices[i]
-        } (Z-score: ${z.toFixed(2)})`
-      );
-      priceManipulationPairs.push(
-        `Price anomaly detected! Trade price: $${
-          prices[i]
-        } (Z-score: ${z.toFixed(2)})`
-      );
-    }
-  });
-
-  // 🚨 Atzīmē aizdomīgās adreses (3+ reizes)
-  const flaggedAddresses: string[] = [];
-  suspiciousSellers.forEach((buyers, seller) => {
-    if (buyers.size >= 3) {
-      flaggedAddresses.push(seller);
-    }
-  });
-
-  // 🚨 Atzīmē adreses, kas tirgo savā starpā
-  const flaggedPairs: string[] = [];
-  tradePairs.forEach((count, pair) => {
-    if (count >= 3) {
-      flaggedPairs.push(pair);
-    }
-  });
+  const riskLevel =
+    severityScore >= 6 ? "High" : severityScore >= 3 ? "Medium" : "Low";
 
   return {
-    suspiciousSellers:
-      flaggedAddresses.length > 0
-        ? flaggedAddresses
-        : "✅ No suspicious sellers detected!",
-    suspiciousTradePairs:
-      flaggedPairs.length > 0 ? flaggedPairs : "✅ No suspicious trade pairs!",
-    priceManipulation:
-      priceManipulationPairs.length > 0
-        ? priceManipulationPairs
-        : "✅ No price manipulation detected!",
+    washTradingRisk: riskLevel,
+    reason:
+      severityScore > 0
+        ? "Multiple suspicious indicators detected"
+        : "Standard statistical analysis",
+    totalTradeVolume: `${tradeHistory.volume.toFixed(2)} ETH`,
+    trades: tradeHistory.trades.slice(0, 50),
+    detailedAnalysis: {
+      price: {
+        avgPrice:
+          tradeHistory.trades.reduce((sum, t) => sum + t.trade_price, 0) /
+          tradeHistory.trades.length,
+        totalVolume: tradeHistory.volume,
+        totalTrades: tradeHistory.trades.length,
+      },
+      pingPong: {
+        suspiciousPairsCount: pingPongAnalysis.suspiciousPairsCount,
+        suspiciousTrades: pingPongAnalysis.pingPongTrades.slice(0, 10),
+      },
+      quickTrades: {
+        count: quickTrades.length,
+        suspiciousTrades: quickTrades.slice(0, 10),
+      },
+      highFrequency: {
+        averageActivity: highFrequencyAnalysis.averageActivity,
+        suspiciousAddresses: highFrequencyAnalysis.suspiciousAddresses.slice(
+          0,
+          5
+        ),
+      },
+    },
   };
-};
-
-/**
- * 📊 Aprēķina Z-score, lai identificētu cenu anomālijas
- */
-const calculateZScores = (prices: number[]): number[] => {
-  const mean = prices.reduce((sum, price) => sum + price, 0) / prices.length;
-  const stdDev = Math.sqrt(
-    prices.reduce((sum, price) => sum + Math.pow(price - mean, 2), 0) /
-      prices.length
-  );
-  return prices.map((price) => (price - mean) / stdDev);
 };

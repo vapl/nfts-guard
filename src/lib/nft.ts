@@ -1,174 +1,290 @@
-import { ethers } from "ethers";
-import { provider } from "@/lib/core"; // Ielādē Ethers.js provideri
+import { NftSale } from "alchemy-sdk";
+import { alchemy, viemClient } from "./alchemy";
+import { formatUnits } from "viem";
 
-// 🔹 Get NFT collection data
 export async function getNFTCollectionData(contractAddress: string) {
-  const contract = new ethers.Contract(
-    contractAddress,
-    [
-      "function name() view returns (string)",
-      "function totalSupply() view returns (uint256)",
-    ],
-    provider
-  );
-
-  const name = await contract.name();
-  const totalSupply = await contract.totalSupply();
-
-  return {
-    name,
-    contractAddress,
-    totalSupply: totalSupply.toString(),
-  };
-}
-
-// 🔹 Get specific NFT metadata
-export async function getNFTMetadata(contractAddress: string, tokenId: string) {
-  const contract = new ethers.Contract(
-    contractAddress,
-    [
-      "function tokenURI(uint256 tokenId) view returns (string)",
-      "function ownerOf(uint256 tokenId) view returns (address)",
-      "function supportsInterface(bytes4) view returns (bool)", // Check ERC standard
-    ],
-    provider
-  );
-
   try {
-    // 🔹 Get NFT owner
-    const owner = await contract.ownerOf(tokenId);
-
-    // 🔹 Determine if it's ERC-721 or ERC-1155
-    const isERC721 = await contract.supportsInterface("0x80ac58cd"); // ERC-721
-    const isERC1155 = await contract.supportsInterface("0xd9b67a26"); // ERC-1155
-
-    // 🛠️ Get `tokenURI`
-    const tokenURI = await contract.tokenURI(tokenId);
-    const metadataUrl = tokenURI.startsWith("ipfs://")
-      ? `https://ipfs.io/ipfs/${tokenURI.split("ipfs://")[1]}`
-      : tokenURI;
-
-    console.log("🔹 Metadata URL:", metadataUrl);
-
-    // 📡 Fetch metadata from API
-    const response = await fetch(metadataUrl);
-    const metadata = await response.json();
-
-    return {
-      contractAddress,
-      tokenId,
-      owner, // 🎯 NFT owner
-      standard: isERC721 ? "ERC-721" : isERC1155 ? "ERC-1155" : "Unknown", // ERC standard
-      metadata, // NFT metadata
-    };
-  } catch (error) {
-    console.error("❌ Error fetching NFT metadata:", error);
-    return {
-      contractAddress,
-      tokenId,
-      error: "Failed to fetch metadata",
-    };
-  }
-}
-
-// 🔹 Fetch NFT price history
-export async function fetchNFTPriceHistory(
-  contractAddress: string,
-  tokenId?: string
-) {
-  console.log(
-    `📡 Fetching trade history for contract: ${contractAddress} and token: ${
-      tokenId || "ALL"
-    }`
-  );
-
-  const API_KEY = process.env.NFTSCAN_API_KEY;
-  if (!API_KEY) {
-    throw new Error(
-      "❌ NFTScan API key is missing! Set NFTSCAN_API_KEY in .env file."
+    console.log(
+      `📡 Fetching collection data from Alchemy for contract: ${contractAddress}`
     );
-  }
 
-  let allTrades = [];
-  let cursor = null; // Sākam bez kursora
-  const limit = 100; // API maksimālais ierakstu skaits vienā pieprasījumā
-  const maxEntries = 1000; // Mērķis ir savākt vismaz 500 darījumus
+    const metadata = await alchemy.nft.getContractMetadata(contractAddress);
+    const floorPriceData = await alchemy.nft.getFloorPrice(contractAddress);
+    const owners = await alchemy.nft.getOwnersForContract(contractAddress);
+    const salesData = await alchemy.nft.getNftSales({ contractAddress });
 
-  try {
-    do {
-      let url = `https://restapi.nftscan.com/api/v2/transactions/${contractAddress}?event_type=Sale&sort_direction=desc&limit=${limit}`;
-      if (tokenId) url += `&token_id=${tokenId}`;
-      if (cursor) url += `&cursor=${cursor}`; // Ja API atgriež nākamo lapas ID
+    const floorPrice =
+      floorPriceData.openSea && "floorPrice" in floorPriceData.openSea
+        ? floorPriceData.openSea.floorPrice
+        : 0;
+    const priceCurrency =
+      floorPriceData.openSea && "priceCurrency" in floorPriceData.openSea
+        ? floorPriceData.openSea.priceCurrency
+        : "";
 
-      console.log(`📡 Fetching trades: ${url}`);
+    const totalSupplyValue = Number(metadata.totalSupply) || 0;
+    const marketCap = floorPrice * totalSupplyValue;
+    const liquidityScore =
+      salesData.nftSales.length / Number(metadata.totalSupply);
 
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          "X-API-KEY": API_KEY,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(
-          `❌ Failed to fetch price history: ${response.statusText}`
-        );
-      }
-
-      const json = await response.json();
-      console.log("🔹 API Response:", JSON.stringify(json, null, 2));
-
-      const data = json.data?.content || [];
-
-      if (!Array.isArray(data) || data.length === 0) {
-        console.warn("⚠️ No valid transaction data received.");
-        break;
-      }
-
-      allTrades.push(...data);
-      cursor = json.data.next_cursor || null; // API atgriež nākamo lapas ID
-    } while (cursor && allTrades.length < maxEntries); // Turpinām, kamēr ir kursors un nav sasniegts limits
-
-    console.log(`✅ Total trades fetched: ${allTrades.length}`);
-    return allTrades;
-  } catch (error) {
-    console.error("❌ Error fetching NFT price history:", error);
-    return [];
-  }
-}
-
-// Get floor price
-export const fetchNFTFloorPrice = async (contractAddress: string) => {
-  console.log(`📡 Fetching floor price for contract: ${contractAddress}`);
-
-  const API_KEY = process.env.NFTSCAN_API_KEY;
-  if (!API_KEY) {
-    throw new Error(
-      "❌ NFTScan API key is missing! Set NFTSCAN_API_KEY in .env file."
-    );
-  }
-
-  try {
-    const url = `https://restapi.nftscan.com/api/v2/assets/${contractAddress}/floor_price`;
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        "X-API-KEY": API_KEY,
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`❌ Failed to fetch floor price: ${response.statusText}`);
+    if (!metadata) {
+      throw new Error("❌ No collection data found");
     }
 
-    const json = await response.json();
-    console.log("🔹 Floor Price Response:", json);
+    return {
+      name: metadata.name || "Unknown",
+      contractAddress,
+      totalSupply: metadata.totalSupply,
+      logoUrl: metadata.openSeaMetadata.imageUrl || "",
+      priceSymbol: metadata.symbol,
+      floorPrice: floorPrice.toFixed(2),
+      priceCurrency,
+      marketCap: marketCap.toFixed(2),
+      uniqueOwners: owners.totalCount,
+      liquidityScore: liquidityScore.toFixed(2),
+    };
+  } catch (error: any) {
+    console.error("❌ Error fetching NFT collection data:", error);
+    return { error: error.message || "Failed to fetch collection data" };
+  }
+}
 
-    return json.data?.floor_price || 0;
+/*///////////////////////////////////////// 
+                Price history
+*/ /////////////////////////////////////////
+
+// Marketplace contract addresses
+const marketplaceAddresses = {
+  OpenSea: "0x4e1f41613c9084fdb9e34e11fae9412427480e56",
+  Blur: "0x00000000000111AbE46ff893f3B2f43A4D0101f0",
+  LooksRare: "0x59728544B08AB483533076417FbBB2fD0B17CE3a",
+  X2Y2: "0x74312363e45DCaBA76c59ec49a7Aa8A65a67EeD3",
+  Sudoswap: "0x2b2e8cda09bba9660dca5cb6233787738ad68329",
+  Foundation: "0xcda72070e455bb31c7690a170224ce43623d0b6f",
+  Rarible: "0xf42aa99f011a1fa7cda90e5e98b277e306bca83e",
+  SuperRare: "0xb16e9d783ad8bcb2a95c42a903d1f5e78e44f01c",
+};
+
+// Get marketplace from transaction
+async function getMarketplaceFromTx(txHash: string): Promise<string> {
+  try {
+    const tx = await viemClient.getTransaction({
+      hash: txHash as `0x${string}`,
+    });
+    const receipt = await viemClient.getTransactionReceipt({
+      hash: txHash as `0x${string}`,
+    });
+
+    if (tx?.to) {
+      for (const [name, address] of Object.entries(marketplaceAddresses)) {
+        if (tx.to.toLowerCase() === address.toLowerCase()) return name;
+      }
+    }
+
+    for (const log of receipt.logs) {
+      for (const [name, address] of Object.entries(marketplaceAddresses)) {
+        if (log.address.toLowerCase() === address.toLowerCase()) return name;
+      }
+    }
+
+    return "Unknown";
   } catch (error) {
-    console.error("❌ Error fetching NFT floor price:", error);
+    console.error(`❌ Error getting marketplace for ${txHash}:`, error);
+    return "Unknown";
+  }
+}
+
+// Get ETH value of transaction
+async function getTransactionValue(txHash: string): Promise<number> {
+  try {
+    const tx = await viemClient.getTransaction({
+      hash: txHash as `0x${string}`,
+    });
+    return tx?.value ? parseFloat(formatUnits(tx.value, 18)) : 0;
+  } catch (error) {
+    console.error(`Error getting transaction value for ${txHash}:`, error);
     return 0;
   }
-};
+}
+
+// Fetch NFT price history
+export async function fetchNFTPriceHistory(
+  contractAddress: string,
+  scanPeriod: "24h" | "7d" | "30d" | "6m" = "24h"
+) {
+  console.log(
+    `📡 Fetching NFT sales history for: ${contractAddress}, Period: ${scanPeriod}`
+  );
+
+  try {
+    const now = Math.floor(Date.now() / 1000);
+    const periodSeconds = {
+      "24h": 86400,
+      "7d": 604800,
+      "30d": 2592000,
+      "6m": 15552000,
+    }[scanPeriod];
+    const startTimestamp = now - periodSeconds;
+
+    const latestBlockData = await viemClient.getBlock({ blockTag: "latest" });
+    const pastBlockData = await viemClient.getBlock({
+      blockNumber: latestBlockData.number - 100n,
+    });
+
+    const avgBlockTime =
+      (Number(latestBlockData.timestamp) - Number(pastBlockData.timestamp)) /
+      100;
+
+    const fromBlock =
+      latestBlockData.number - BigInt(Math.floor(periodSeconds / avgBlockTime));
+
+    console.log(
+      `🔗 Calculated blocks range: ${fromBlock} to ${latestBlockData.number}`
+    );
+    if (!latestBlockData?.number)
+      throw new Error("❌ Failed to fetch latest block number");
+
+    const latestBlock = Number(latestBlockData.number);
+    const toBlock = latestBlock;
+
+    console.log(`🔗 Blocks: From ${fromBlock} to ${toBlock}`);
+    console.log(
+      `🕒 Start timestamp: ${startTimestamp}, Current timestamp: ${now}`
+    );
+
+    let alchemyNftSales: NftSale[] = [];
+    let customAssetTransfers: any[] = [];
+    let usingCustomAPI = false;
+
+    try {
+      const alchemySales = await alchemy.nft.getNftSales({
+        contractAddress,
+        fromBlock: Number(fromBlock),
+        toBlock: Number(toBlock),
+      });
+      if (alchemySales?.nftSales?.length > 0) {
+        alchemyNftSales = alchemySales.nftSales;
+        console.log(
+          `✅ Retrieved ${alchemyNftSales.length} sales from Alchemy getNftSales`
+        );
+      } else {
+        console.log("⚠️ No sales found using `getNftSales()`");
+      }
+    } catch (error) {
+      console.log("⚠️ Error with getNftSales():", error);
+    }
+
+    if (alchemyNftSales.length === 0) {
+      usingCustomAPI = true;
+      console.log("Trying `alchemy_getAssetTransfers()`...");
+
+      const response = await fetch(
+        `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache",
+          },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            method: "alchemy_getAssetTransfers",
+            params: [
+              {
+                fromBlock: `0x${fromBlock.toString(16)}`,
+                toBlock: `0x${toBlock.toString(16)}`,
+                contractAddresses: [contractAddress],
+                category: ["erc721"],
+                excludeZeroValue: true,
+                withMetadata: true,
+              },
+            ],
+            id: 1,
+          }),
+        }
+      );
+
+      const data = await response.json();
+      if (data?.result?.transfers?.length > 0) {
+        customAssetTransfers = data.result.transfers;
+        console.log(
+          `✅ Retrieved ${customAssetTransfers.length} transfers from custom API`
+        );
+      } else {
+        console.log(
+          "⚠️ No transfers found using `alchemy_getAssetTransfers` either."
+        );
+        return { trades: [], volume: 0, totalTrades: 0 };
+      }
+    }
+
+    let formattedTrades = [];
+
+    if (usingCustomAPI) {
+      formattedTrades = await Promise.all(
+        customAssetTransfers.map(async (transfer) => {
+          const txValue = await getTransactionValue(transfer.hash);
+          const marketplace = await getMarketplaceFromTx(transfer.hash);
+
+          return {
+            from: transfer.from || "Unknown",
+            to: transfer.to || "Unknown",
+            event_type: "Transfer",
+            trade_price: txValue,
+            marketplace,
+            transactionHash: transfer.hash,
+            timestamp: transfer.metadata?.blockTimestamp || now.toString(),
+            token_id: transfer.erc721TokenId || transfer.tokenId,
+          };
+        })
+      );
+    } else {
+      formattedTrades = alchemyNftSales.map((sale) => ({
+        from: sale.sellerAddress || "Unknown",
+        to: sale.buyerAddress || "Unknown",
+        event_type: "Sale",
+        trade_price:
+          sale.sellerFee?.amount && sale.sellerFee?.decimals
+            ? parseFloat(
+                formatUnits(
+                  BigInt(sale.sellerFee.amount),
+                  sale.sellerFee.decimals
+                )
+              )
+            : 0,
+        marketplace: sale.marketplace || "Unknown",
+        transactionHash: sale.transactionHash,
+        timestamp: now.toString(),
+        token_id: sale.tokenId,
+      }));
+    }
+
+    formattedTrades = formattedTrades.filter((trade) => trade.trade_price > 0);
+    formattedTrades = formattedTrades.filter(
+      (trade, index, self) =>
+        index ===
+        self.findIndex((t) => t.transactionHash === trade.transactionHash)
+    );
+
+    const totalVolume = formattedTrades.reduce(
+      (sum, trade) => sum + trade.trade_price,
+      0
+    );
+
+    console.log(
+      `✅ Total Trades: ${formattedTrades.length}, Volume: ${totalVolume} ETH`
+    );
+    console.log(
+      `🔗 Fetching transactions from block ${fromBlock} to ${toBlock}`
+    );
+
+    return {
+      trades: formattedTrades,
+      volume: totalVolume,
+      totalTrades: formattedTrades.length,
+    };
+  } catch (error) {
+    console.error("❌ Error fetching NFT price history:", error);
+    return { trades: [], volume: 0, totalTrades: 0 };
+  }
+}
