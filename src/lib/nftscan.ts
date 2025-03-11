@@ -1,4 +1,7 @@
 import { getNFTCollectionData, fetchNFTPriceHistory } from "@/lib/nft";
+import { getMarketDepthViem } from "@/lib/marketDepth";
+import { analyzeLiquidity } from "@/lib/liquidityAnalisys";
+import { evaluateTraderReputation } from "@/lib/traderReputation";
 
 /**
  * Aprēķina wash trading risku, balstoties uz statistisko analīzi
@@ -21,7 +24,7 @@ function analyzeWashTrading(trades: any[], floorPrice: number) {
     )}, Deviation from Floor: ${priceDeviation.toFixed(2)}`
   );
 
-  if (priceDeviation > 0.3) return "High"; // Cena par 30% atšķiras no floor price
+  if (priceDeviation > 0.3) return "High";
   if (stdDev > avgPrice * 0.5) return "High";
   if (stdDev > avgPrice * 0.2) return "Medium";
 
@@ -78,7 +81,7 @@ function detectQuickTrades(trades: any[]) {
         new Date(trade.timestamp).getTime() -
           new Date(prevTrade.timestamp).getTime()
       ) / 1000;
-    return timeDiff < 600; // <10 min starplaiks
+    return timeDiff < 600;
   });
 
   return quickTrades;
@@ -127,9 +130,18 @@ export const detectWashTrading = async (
     return { error: "❌ Invalid contract address" };
   }
 
-  const [collectionData, tradeHistory] = await Promise.all([
+  const [
+    collectionData,
+    tradeHistory,
+    marketDepth,
+    liquidity,
+    traderReputation,
+  ] = await Promise.all([
     getNFTCollectionData(contractAddress),
     fetchNFTPriceHistory(contractAddress, scanPeriod),
+    getMarketDepthViem(contractAddress),
+    analyzeLiquidity(contractAddress),
+    evaluateTraderReputation(contractAddress),
   ]);
 
   if (!tradeHistory.trades || tradeHistory.trades.length === 0) {
@@ -142,22 +154,12 @@ export const detectWashTrading = async (
     };
   }
 
-  console.log(
-    `✅ Total trades before filtering: ${tradeHistory.trades.length}`
-  );
-
-  const floorPriceData = await collectionData.floorPrice;
-  const floorPrice = Number(floorPriceData) || 0;
-
-  // ✅ Statistiskā analīze
+  const floorPrice = Number(collectionData.floorPrice) || 0;
   const washTradingRisk = analyzeWashTrading(tradeHistory.trades, floorPrice);
-
-  // ✅ Ping-pong un quick trades analīze
   const pingPongAnalysis = detectPingPongTrading(tradeHistory.trades);
   const highFrequencyAnalysis = detectHighFrequencyTrading(tradeHistory.trades);
   const quickTrades = detectQuickTrades(tradeHistory.trades);
 
-  // ✅ Wash Trading Severity Score
   let severityScore = 0;
   if (pingPongAnalysis.suspiciousPairsCount > 0) severityScore += 3;
   if (highFrequencyAnalysis.suspiciousAddresses.length > 2) severityScore += 2;
@@ -174,30 +176,38 @@ export const detectWashTrading = async (
         ? "Multiple suspicious indicators detected"
         : "Standard statistical analysis",
     totalTradeVolume: `${tradeHistory.volume.toFixed(2)} ETH`,
+    filteredTradeVolume: `${tradeHistory.trades
+      .filter(
+        (trade: { from: string; to: string }) =>
+          !highFrequencyAnalysis.suspiciousAddresses.some(
+            (addr) => addr.address === trade.from || addr.address === trade.to
+          )
+      )
+      .reduce(
+        (sum: any, trade: { trade_price: any }) => sum + trade.trade_price,
+        0
+      )
+      .toFixed(2)} ETH`,
     trades: tradeHistory.trades.slice(0, 50),
     detailedAnalysis: {
       price: {
         avgPrice:
-          tradeHistory.trades.reduce((sum, t) => sum + t.trade_price, 0) /
-          tradeHistory.trades.length,
+          tradeHistory.trades.reduce(
+            (sum: any, t: { trade_price: any }) => sum + t.trade_price,
+            0
+          ) / tradeHistory.trades.length,
         totalVolume: tradeHistory.volume,
         totalTrades: tradeHistory.trades.length,
       },
-      pingPong: {
-        suspiciousPairsCount: pingPongAnalysis.suspiciousPairsCount,
-        suspiciousTrades: pingPongAnalysis.pingPongTrades.slice(0, 10),
-      },
+      pingPong: pingPongAnalysis,
       quickTrades: {
         count: quickTrades.length,
         suspiciousTrades: quickTrades.slice(0, 10),
       },
-      highFrequency: {
-        averageActivity: highFrequencyAnalysis.averageActivity,
-        suspiciousAddresses: highFrequencyAnalysis.suspiciousAddresses.slice(
-          0,
-          5
-        ),
-      },
+      highFrequency: highFrequencyAnalysis,
+      marketDepth,
+      liquidity,
+      traderReputation,
     },
   };
 };
