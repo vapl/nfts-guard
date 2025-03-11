@@ -9,11 +9,29 @@ import {
   FaChartLine,
 } from "react-icons/fa";
 import { getNFTCollectionData } from "@/lib/nft";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 export default function NFTScanner() {
   const [nftInput, setNftInput] = useState("");
   const [isScanning, setIsScanning] = useState(false);
   const [result, setResult] = useState<NftData | null>(null);
+
+  const washTradingData = [
+    { day: "Mon", percentage: 5 },
+    { day: "Tue", percentage: 10 },
+    { day: "Wed", percentage: 15 },
+    { day: "Thu", percentage: 20 },
+    { day: "Fri", percentage: 25 },
+    { day: "Sat", percentage: 15 },
+    { day: "Sun", percentage: 10 },
+  ];
 
   const handleScan = async () => {
     const validContractOrToken = /^0x[a-fA-F0-9]{40}$|^[0-9]+$/;
@@ -32,7 +50,7 @@ export default function NFTScanner() {
         id: "nft-id", // Ja nepieciešams, pielāgo
         name: collectionData.name || "Unknown NFT",
         tokenId: nftInput,
-        image: collectionData.logoUrl || "/placeholder.png",
+        image: collectionData.logoUrl || "/nft_placeholder.png",
         contract: collectionData.contractAddress,
         owner: "Unknown", // Pielāgo, ja nepieciešams
         isVerifiedContract: true,
@@ -130,8 +148,20 @@ export default function NFTScanner() {
             Contract: {result.contract}
           </p>
 
+          {result.image ? (
+            <img
+              src={result.image}
+              alt={result.name}
+              className="w-32 h-32 rounded-lg mx-auto mb-4 shadow-md"
+            />
+          ) : (
+            <div className="w-32 h-32 bg-gray-700 rounded-lg mx-auto mb-4 flex items-center justify-center text-gray-400">
+              No Image
+            </div>
+          )}
+
           {/* Main stats */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
             <div className="p-4 bg-gray-800 rounded-lg">
               <span className="text-gray-400">Current Price</span>
               <p className="text-xl font-semibold">{result.currentPrice} ETH</p>
@@ -142,9 +172,7 @@ export default function NFTScanner() {
             </div>
             <div className="p-4 bg-gray-800 rounded-lg">
               <span className="text-gray-400">Collection Floor</span>
-              <p className="text-xl font-semibold">
-                {result.collectionFloor} ETH
-              </p>
+              <p className="text-xl font-semibold">{result.floorPrice} ETH</p>
             </div>
           </div>
 
@@ -158,11 +186,34 @@ export default function NFTScanner() {
                 ) : (
                   <FaCheckCircle className="text-green-500" />
                 )}
-                Wash Trading Risk: {result.washTradingRisk.level}
+                <p
+                  className="flex items-center gap-2"
+                  title="Wash trading ir mākslīgi darījumi, kas rada ilūziju par lielāku tirgus aktivitāti"
+                >
+                  Wash Trading Risk: {result.washTradingRisk.level}
+                </p>
               </p>
               <p className="text-gray-400 text-sm">
                 {result.washTradingRisk.percentage}
               </p>
+            </div>
+            <div className="mt-6 p-4 bg-gray-800 rounded-lg">
+              <h3 className="text-lg font-semibold mb-2">
+                Wash Trading Trends
+              </h3>
+              <ResponsiveContainer width="100%" height={200}>
+                <LineChart data={washTradingData}>
+                  <XAxis dataKey="day" stroke="#8884d8" />
+                  <YAxis />
+                  <Tooltip />
+                  <Line
+                    type="monotone"
+                    dataKey="percentage"
+                    stroke="#8884d8"
+                    strokeWidth={2}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
             <div className="p-4 bg-gray-800 rounded-lg mt-3">
               <p className="flex items-center gap-2">
@@ -194,22 +245,6 @@ export default function NFTScanner() {
                 {result.marketDepth.depthAnalysis}
               </p>
             </div>
-          </div>
-          {/* Whale Holders */}
-          <div className="p-4 bg-gray-800 rounded-lg mt-3">
-            <p className="flex items-center gap-2">
-              <FaExclamationTriangle className="text-yellow-500" />
-              Whale Activity: {result.whaleHolders?.percentage || "N/A"}
-            </p>
-          </div>
-
-          {/* Trader Reputation */}
-          <div className="p-4 bg-gray-800 rounded-lg mt-3">
-            <p className="flex items-center gap-2">
-              <FaExclamationTriangle className="text-orange-500" />
-              Trader Reputation:{" "}
-              {result.traderReputation?.reputationScore || "N/A"}
-            </p>
           </div>
 
           {/* User Reports */}
