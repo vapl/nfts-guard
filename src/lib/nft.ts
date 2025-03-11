@@ -22,10 +22,11 @@ export async function getNFTCollectionData(contractAddress: string) {
         ? floorPriceData.openSea.priceCurrency
         : "";
 
+    // ✅ Nodrošinām, ka `totalSupply` vienmēr ir skaitlis
     const totalSupplyValue = Number(metadata.totalSupply) || 0;
+
     const marketCap = floorPrice * totalSupplyValue;
-    const liquidityScore =
-      salesData.nftSales.length / Number(metadata.totalSupply);
+    const liquidityScore = salesData.nftSales.length / (totalSupplyValue || 1);
 
     if (!metadata) {
       throw new Error("❌ No collection data found");
@@ -33,19 +34,24 @@ export async function getNFTCollectionData(contractAddress: string) {
 
     return {
       name: metadata.name || "Unknown",
-      contractAddress,
-      totalSupply: metadata.totalSupply,
-      logoUrl: metadata.openSeaMetadata.imageUrl || "",
-      priceSymbol: metadata.symbol,
+      contractAddress: contractAddress || "Unknown", // ✅ Nodrošinām `string`
+      totalSupply: totalSupplyValue || 0,
+      logoUrl: metadata.openSeaMetadata?.imageUrl ?? "", // ✅ Nodrošinām, ka vienmēr ir string
+      priceSymbol: metadata.symbol || "ETH",
       floorPrice: floorPrice.toFixed(2),
       priceCurrency,
       marketCap: marketCap.toFixed(2),
-      uniqueOwners: owners.totalCount,
+      uniqueOwners: owners.totalCount || 0,
       liquidityScore: liquidityScore.toFixed(2),
     };
   } catch (error: any) {
     console.error("❌ Error fetching NFT collection data:", error);
-    return { error: error.message || "Failed to fetch collection data" };
+    return {
+      error: error.message || "Failed to fetch collection data",
+      contractAddress: "Unknown",
+      totalSupply: 0,
+      logoUrl: "", // ✅ Nodrošinām, ka vienmēr ir string
+    };
   }
 }
 
