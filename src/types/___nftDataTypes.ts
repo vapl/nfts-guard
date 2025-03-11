@@ -1,67 +1,68 @@
-import { ReactNode } from "react";
-
 export interface NftData {
-  owner: ReactNode;
   id: string;
   name: string;
   tokenId: string;
-  image?: string;
+  image: string;
   contract: string;
+  owner: string;
   isVerifiedContract: boolean;
   hasHiddenFunctions: boolean;
   currentPrice: number;
   lastSale: number;
   collectionFloor: number;
-  rarityRank: number;
-  totalSupply: number;
-  salesVolume7d: number;
+  priceSymbol: string;
+  floorPrice: number;
+  priceCurrency: string;
+  marketCap: string;
+  uniqueOwners: number;
+
+  // ✅ Drošības rādītājs
   safetyScore: {
     score: number;
     reason: { factor: string; impact: string }[];
   };
-  ownersCount: number;
-  transactionCount: number;
-  transferCount: number;
-  suspiciousTransfers: {
-    detected: boolean;
-    reason: string;
-  };
+
+  // ✅ Whale aktivitāte
   whaleHolders: {
-    percentage: number;
-    suspiciousActivity: {
+    percentage: string; // Nodrošina, ka procenti tiek pārvērsti par string
+    suspiciousActivity?: {
       detected: boolean;
       reason: string;
     };
   };
-  anonymousCreators: {
-    detected: boolean;
-    reason: string;
-  };
-  rugPullRisk: {
-    level: "Low" | "Medium" | "High";
-    reason: string;
-    lastLargeOutflow: string;
-  };
+
+  // ✅ Wash Trading analīze
   washTradingRisk: {
     level: "Low" | "Medium" | "High";
     percentage: string;
     detectedInTransactions: number;
     reason: string;
   };
-  socialSignals: {
-    twitterFollowers: number;
-    discordMembers: number;
-    twitterEngagement: string;
+
+  // ✅ Tirgus dziļuma analīze
+  marketDepth: {
+    bidAskSpread: string;
+    depthAnalysis: string;
   };
-  contractCreationDate: string;
-  firstSaleDate: string;
-  lastActivity: string;
-  metadataHosting: {
-    provider: string;
-    securityRisk: "Low" | "Medium" | "High";
+
+  // ✅ Likviditātes analīze
+  liquidity: {
+    liquidityScore: "Low" | "Medium" | "High";
+    avgTimeOnMarket: string;
+    totalTrades: number;
   };
+
+  // ✅ Tirgotāju reputācija
+  traderReputation: {
+    reputationScore: "Stable" | "Unstable" | "High Risk";
+    activeTraders: number;
+    newTraders: number;
+    newTraderPercentage: string;
+  };
+
+  // ✅ Lietotāju ziņojumi
   userReports: {
-    count: number;
-    context: string;
+    reportCount: number;
+    reports: string[];
   };
 }
