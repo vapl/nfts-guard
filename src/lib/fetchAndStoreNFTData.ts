@@ -1,20 +1,32 @@
+import { detectWashTrading } from "@/lib/analysis/detectWashTrading";
 import { getCollectionData } from "./getReservoirCollections";
 import { getNFTSales } from "./getReservoirSales";
 import { getNFTTransfers } from "./getReservoirTransfers";
 import { getNFTCollectionOwners } from "./getReservoirCollectionOwners";
+import { detectRugPull } from "./analysis/detectRugPull";
 
 /**
- * Fetches and stores all NFT-related data for a given contract address.
- * @param contractAddress The NFT collection contract address.
- * @param timePeriod The time period for fetching sales and transfers (1, 7, 30, 90, 365 days).
+ * ✅ Fetches and stores all NFT-related data for a given contract address
  */
-export async function fetchAndStoreNFTData(
+export async function fetchAndAnalyzeNFTData(
   contractAddress: string,
   timePeriod: 1 | 7 | 30 | 90 | 365
 ) {
-  console.log(`🚀 Starting data fetch for contract: ${contractAddress}`);
+  console.log(
+    `🚀 Starting full data fetch and analysis for contract: ${contractAddress}`
+  );
 
   try {
+    // ✅ Validējam timePeriod
+    const allowedPeriods = [1, 7, 30, 90, 365] as const;
+    if (!allowedPeriods.includes(timePeriod)) {
+      throw new Error(
+        `Invalid timePeriod: ${timePeriod}. Allowed values: ${allowedPeriods.join(
+          ", "
+        )}`
+      );
+    }
+
     // ✅ 1️⃣ Iegūst kolekcijas datus un saglabā DB
     const collectionData = await getCollectionData(contractAddress);
     console.log("✅ Collection Data Fetched:", collectionData);
@@ -34,10 +46,28 @@ export async function fetchAndStoreNFTData(
     );
     console.log(`✅ Owners Data Fetched (${ownersData.length} records)`);
 
-    console.log("🎯 All data successfully fetched and stored!");
-    return { collectionData, salesData, transferData, ownersData };
+    // ✅ 5️⃣ Izsauc Wash Trading analīzi pēc tam, kad pārdošanas dati ir ielādēti
+    const washTradingAnalysis = await detectWashTrading(
+      contractAddress,
+      timePeriod
+    );
+    console.log("✅ Wash Trading Analysis Completed:", washTradingAnalysis);
+
+    // ✅ 6️⃣ Izsauc Rug Pull analīzi
+    const rugPullAnalysis = await detectRugPull(contractAddress, timePeriod);
+    console.log("✅ Rug Pull Analysis Completed:", rugPullAnalysis);
+
+    console.log("🎯 All data successfully fetched, stored, and analyzed!");
+    return {
+      collectionData,
+      salesData,
+      transferData,
+      ownersData,
+      washTradingAnalysis,
+      rugPullAnalysis,
+    };
   } catch (error) {
-    console.error("❌ Error fetching and storing NFT data:", error);
+    console.error("❌ Error fetching, storing, or analyzing NFT data:", error);
     return null;
   }
 }

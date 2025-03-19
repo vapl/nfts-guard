@@ -25,7 +25,7 @@ interface SaleAPIResponse {
  */
 export async function getNFTSales(
   contractAddress: string,
-  timePeriod: 1 | 7 | 30 | 90 | 365
+  timePeriod: number
 ): Promise<NFTTransactionProps[]> {
   try {
     console.log(`🔎 Checking for cached sales in DB: ${contractAddress}`);

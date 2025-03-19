@@ -62,3 +62,23 @@ export interface NFTCollectionOwnerProps {
   ownership_percentage: number;
   on_sale_count: number;
 }
+
+// NFT whale activity properties
+export interface NFTWhaleActivityProps {
+  contract_address: string;
+  wallet: string;
+  whale_buys: number;
+  whale_sells: number;
+  whale_transfers: number;
+  total_activity?: number; // Kopējā aktivitāte (pirkumi + pārdošanas + pārskaitījumi)
+  frequent_recipients: string[];
+  whale_network: string[];
+  total_eth_spent: number; // ETH summa, ko vaļi iztērējuši NFT darījumos
+  total_usd_spent: number; // USD summa, ko vaļi iztērējuši NFT darījumos
+  avg_hold_time: number; // Vidējais NFT turēšanas ilgums (dienās)
+  price_volatility: number;
+  wash_trade_count?: number; // Wash trading darījumu skaits
+  rug_pull_sell?: boolean; // Vai valis pārdeva NFT pēc floor price krituma
+  whale_type: string;
+  last_updated: string; // Pēdējais datu atjaunināšanas laiks
+}
