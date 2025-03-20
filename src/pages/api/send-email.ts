@@ -26,7 +26,7 @@ export default async function handler(
     console.log("Sending subscription confirmation email to:", email);
 
     // Formēts e-pasta saturs
-    const emailContent = generateSubscribeEmailContent(email);
+    const emailContent = generateSubscribeEmailContent();
 
     const response = await resend.emails.send({
       from: "info@nftsguard.com",
