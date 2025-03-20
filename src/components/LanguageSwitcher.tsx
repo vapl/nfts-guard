@@ -8,6 +8,7 @@ export default function LanguageSwitcher() {
   const pathname = usePathname();
 
   const switchLanguage = (newLocale: string) => {
+    if (!pathname) return;
     const segments = pathname.split("/");
     segments[1] = newLocale; // Aizstāj [locale] daļu
     router.push(segments.join("/"));

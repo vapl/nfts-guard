@@ -1,14 +1,10 @@
-export interface NFTData {
-  tokenId: string;
-  metadata: {
-    name: string;
-    description?: string;
-    imageUrl?: string;
-    attributes?: Record<string, any>;
-  };
+export interface NftData {
+  name: string;
+  description: string;
+  owner: string;
+  image?: string;
   rarityRank?: number;
-  transactions: Transaction[];
-  analytics?: NFTAnalytics;
+  totalSupply?: number;
 }
 
 export interface Transaction {

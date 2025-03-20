@@ -21,3 +21,4 @@ yarn-error.log*
 # Env files (varam atstāt backend .env)
 .env*
 .env.local
+.vercel
