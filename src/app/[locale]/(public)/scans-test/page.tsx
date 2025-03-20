@@ -266,3 +266,87 @@
 //     </section>
 //   );
 // }
+"use client";
+import { Line, Bar } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Tooltip,
+  Legend,
+  BarElement,
+} from "chart.js";
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Tooltip,
+  Legend,
+  BarElement
+);
+
+export default function NFTAnalysis() {
+  const priceTrendData = {
+    labels: ["1-Feb", "2-Feb", "3-Feb", "4-Feb", "5-Feb", "6-Feb", "7-Feb"],
+    datasets: [
+      {
+        label: "Price Trend (ETH)",
+        data: [2.8, 2.6, 3.0, 3.1, 2.9, 3.2, 3.0],
+        borderColor: "#6366f1",
+        backgroundColor: "rgba(99, 102, 241, 0.2)",
+        tension: 0.4,
+      },
+    ],
+  };
+
+  const volumeData = {
+    labels: ["1-Feb", "2-Feb", "3-Feb", "4-Feb", "5-Feb", "6-Feb", "7-Feb"],
+    datasets: [
+      {
+        label: "Daily Volume (ETH)",
+        data: [150, 120, 180, 200, 170, 210, 190],
+        backgroundColor: "#10b981",
+      },
+    ],
+  };
+
+  const chartOptions = {
+    maintainAspectRatio: false,
+    responsive: true,
+    scales: {
+      y: {
+        beginAtZero: true,
+      },
+    },
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-black via-gray-900 to-gray-800 text-white p-8">
+      <h2 className="text-5xl font-extrabold mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-pink-400 drop-shadow-lg">
+        🔍 NFT Risk Analysis - Azuki Collection
+      </h2>
+
+      <div className="bg-gray-800 p-8 rounded-xl max-w-2xl w-full shadow-2xl border border-gray-700 mb-6">
+        <h3 className="text-2xl font-bold text-center text-blue-300 mb-4">
+          Price Trend Over Time
+        </h3>
+        <div className="w-full h-64">
+          <Line data={priceTrendData} options={chartOptions} />
+        </div>
+      </div>
+
+      <div className="bg-gray-800 p-8 rounded-xl max-w-2xl w-full shadow-2xl border border-gray-700 mb-6">
+        <h3 className="text-2xl font-bold text-center text-green-300 mb-4">
+          Daily Trading Volume
+        </h3>
+        <div className="w-full h-64">
+          <Bar data={volumeData} options={chartOptions} />
+        </div>
+      </div>
+    </div>
+  );
+}

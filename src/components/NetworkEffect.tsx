@@ -4,8 +4,6 @@ import { useEffect, useRef } from "react";
 
 export default function BlockchainNetwork() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const virtualWidth = 1920;
-  const virtualHeight = 1080;
   const particlesRef = useRef<
     { x: number; y: number; vx: number; vy: number }[]
   >([]);
@@ -16,50 +14,44 @@ export default function BlockchainNetwork() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    function resizeCanvas() {
+      if (!canvas) return;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+
     // Palielinām daļiņu skaitu un ātrumu efektam
     if (particlesRef.current.length === 0) {
       particlesRef.current = Array.from({ length: 80 }).map(() => ({
-        x: Math.random() * virtualWidth,
-        y: Math.random() * virtualHeight * 0.8,
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height * 0.9,
         vx: (Math.random() - 0.5) * 0.8, // 🚀 Ātrākas kustības
         vy: (Math.random() - 0.5) * 0.8, // 🚀 Ātrākas kustības
       }));
     }
 
-    canvas.width = virtualWidth;
-    canvas.height = virtualHeight;
-
-    function resizeCanvas() {
-      const scaleX = window.innerWidth / virtualWidth;
-      const scaleY = window.innerHeight / virtualHeight;
-      const scale = Math.min(scaleX, scaleY);
-      if (canvas) {
-        canvas.style.width = `${virtualWidth * scale}px`;
-        canvas.style.height = `${virtualHeight * scale}px`;
-      }
-    }
-    resizeCanvas();
-    window.addEventListener("resize", resizeCanvas);
-
     function draw() {
       if (!ctx || !canvas) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      ctx.strokeStyle = "rgba(138, 43, 226, 0.5)"; // Spilgtākas līnijas efektam
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = "rgba(137, 43, 226, 0.3)"; // Spilgtākas līnijas efektam
+      ctx.lineWidth = 0.8;
 
       particlesRef.current.forEach((p, i) => {
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); // 📌 Lielākas daļiņas
+        ctx.arc(p.x, p.y, 3, 0, Math.PI * 2); // 📌 Lielākas daļiņas
         ctx.fillStyle = "rgba(138, 43, 226, 0.9)";
         ctx.fill();
 
         particlesRef.current.forEach((p2, j) => {
           if (i !== j) {
             const distance = Math.hypot(p.x - p2.x, p.y - p2.y);
-            if (distance < 200) {
+            if (distance < 150) {
               // 📌 Palielināts attālums līnijām
-              ctx.globalAlpha = 1 - distance / 200;
+              ctx.globalAlpha = 1 - distance / 150;
               ctx.beginPath();
               ctx.moveTo(p.x, p.y);
               ctx.lineTo(p2.x, p2.y);
@@ -89,7 +81,7 @@ export default function BlockchainNetwork() {
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 pointer-events-none z-[0]"
+      className="fixed top-0 left-200 w-full h-full object-cover pointer-events-none z-0"
     />
   );
 }

@@ -9,8 +9,8 @@ export interface SocialLink {
 }
 
 export const socialLinks: SocialLink[] = [
-  { name: "twitter", icon: FaTwitter, href: "https://twitter.com" },
+  { name: "twitter", icon: FaTwitter, href: "https://twitter.com/NFTsGuard" },
   { name: "instagram", icon: FaInstagram, href: "https://instagram.com" },
   { name: "linkedin", icon: FaLinkedin, href: "https://linkedin.com" },
-  { name: "discord", icon: FaDiscord, href: "https://discord.com" },
+  { name: "discord", icon: FaDiscord, href: "https://discord.gg/zqhEbgEsur" },
 ];

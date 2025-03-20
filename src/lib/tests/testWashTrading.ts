@@ -1,6 +1,6 @@
 import { detectWashTrading } from "@/lib/analysis/detectWashTrading";
 
-const contractAddress = "0xbd3531da5cf5857e7cfaa92426877b022e612cf8"; // Nomaini ar reālu adresi
+const contractAddress = "0xed5af388653567af2f388e6224dc7c4b3241c544"; // Nomaini ar reālu adresi
 
 detectWashTrading(contractAddress, 30)
   .then((result) => {
