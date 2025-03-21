@@ -94,7 +94,7 @@ export default function ComingSoon() {
   return (
     <>
       <NetworkEffect />
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white text-center px-6">
+      <div className="overflow-hidden flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white text-center px-6">
         {/* 🔵 NFT Guard Logo */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -110,7 +110,7 @@ export default function ComingSoon() {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1.2 }}
-          className="text-5xl font-extrabold mb-4 relative z-10"
+          className="text-5xl md:text-6xl font-extrabold mb-4 relative z-10"
         >
           Coming <span className="text-purple-400">Soon</span>
         </motion.h1>
@@ -159,7 +159,7 @@ export default function ComingSoon() {
           )}
           <p className="text-xs text-gray-400 mt-2">
             By subscribing, you agree to our{" "}
-            <Link href="/terms" className="text-purple-400 hover:underline">
+            <Link href="en/terms" className="text-purple-400 hover:underline">
               Terms & Conditions
             </Link>{" "}
             and{" "}

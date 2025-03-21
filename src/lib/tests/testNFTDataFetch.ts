@@ -1,7 +1,7 @@
 import { fetchAndAnalyzeNFTData } from "../fetchAndStoreNFTData";
 
 // 0xbd3531da5cf5857e7cfaa92426877b022e612cf8
-const testContract = "0x80336ad7a747236ef41f47ed2c7641828a480baa"; // Aizvieto ar reālu NFT kolekcijas adresi
+const testContract = "0xb792864e4659d0b8076f9c6912c228f914ec66d4"; // Aizvieto ar reālu NFT kolekcijas adresi
 const testTimePeriod = 30;
 
 async function test() {

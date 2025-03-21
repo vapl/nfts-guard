@@ -1,21 +1,42 @@
 "use client";
 
 import { TranslationProvider } from "@/context/TranslationContext";
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { getTranslations, Locale, locales } from "@/utils/getTranslations";
-import { useParams } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
+
+const DEFAULT_LOCALE: Locale = "en";
 
 export default function TranslationWrapper({
   children,
 }: {
   children: ReactNode;
 }) {
-  const params = useParams<{ locale?: string }>(); // Pieņemam, ka locale var būt undefined
-  const locale = params?.locale as Locale | undefined;
+  const params = useParams<{ locale?: string }>();
+  const pathname = usePathname();
+  const router = useRouter();
 
-  if (!locale || !locales.includes(locale)) {
-    throw new Error("Invalid locale");
-  }
+  const [locale, setLocale] = useState<Locale | null>(null);
+
+  useEffect(() => {
+    let detectedLocale = params?.locale as Locale | undefined;
+
+    if (!detectedLocale || !locales.includes(detectedLocale)) {
+      console.warn(
+        `Invalid locale: ${detectedLocale}, redirecting to default locale (${DEFAULT_LOCALE})`
+      );
+    }
+
+    detectedLocale = DEFAULT_LOCALE;
+
+    if (pathname && !locales.some((loc) => pathname.startsWith(`/${loc}`))) {
+      router.replace(`/${DEFAULT_LOCALE}${pathname}`);
+    }
+
+    setLocale(detectedLocale);
+  }, [params?.locale, pathname, router]);
+
+  if (!locale) return null;
 
   const messages = getTranslations(locale);
 

@@ -37,12 +37,12 @@ export default function BlockchainNetwork() {
       if (!ctx || !canvas) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      ctx.strokeStyle = "rgba(137, 43, 226, 0.3)"; // Spilgtākas līnijas efektam
-      ctx.lineWidth = 0.8;
+      ctx.strokeStyle = "rgba(137, 43, 226, 0.716)"; // Spilgtākas līnijas efektam
+      ctx.lineWidth = 0.3;
 
       particlesRef.current.forEach((p, i) => {
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 3, 0, Math.PI * 2); // 📌 Lielākas daļiņas
+        ctx.arc(p.x, p.y, 2, 0, Math.PI * 2); // 📌 Lielākas daļiņas
         ctx.fillStyle = "rgba(138, 43, 226, 0.9)";
         ctx.fill();
 
