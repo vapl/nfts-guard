@@ -408,12 +408,12 @@ export default function PrivacyPolicy() {
                   <p className="text-lg text-gray-300 mb-6 max-w-full">
                     For any questions or concerns, please feel free to contact
                     us at{" "}
-                    <a
+                    <Link
                       href="mailto:info@nftsguard.com"
                       className="text-purple-400 hover:underline"
                     >
                       info@nftsguard.com
-                    </a>
+                    </Link>
                     .
                   </p>
                 </>
