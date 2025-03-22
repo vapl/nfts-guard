@@ -20,13 +20,13 @@ export const generateSubscribeEmailContent = () => {
       >
         <div style="text-align: center; margin-bottom: 20px">
           <img
-            src="https://nftsguard.com/image/logo/nftsguard-logo.png"
+            src="https://nftsguard.com/image/logo/nftsguard-logo-gray.png"
             alt="NFTs Guard Logo"
             style="width: 64px"
           />
         </div>
 
-        <h1 style="font-size: 24px; text-align: center; color: #000">
+        <h1 style="font-size: 24px; text-align: center; color: #545454">
           Welcome to <span style="color: #6d28d9">NFTs Guard</span>!
         </h1>
         <p
