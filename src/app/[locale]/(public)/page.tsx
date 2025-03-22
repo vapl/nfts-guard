@@ -94,7 +94,7 @@ export default function ComingSoon() {
   return (
     <>
       <NetworkEffect />
-      <div className="overflow-hidden flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white text-center px-6">
+      <div className="flex flex-col items-center justify-center h-screen max-w-screen bg-gradient-to-br from-black via-gray-900 to-black text-white text-center px-6">
         {/* 🔵 NFT Guard Logo */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -122,8 +122,8 @@ export default function ComingSoon() {
           transition={{ duration: 1.5 }}
           className="text-lg text-gray-300 mb-6 max-w-lg relative z-10"
         >
-          Protect your NFTs like never before! Our advanced security system will
-          be launching soon. Stay updated!
+          Spot NFT scams before they strike! NFTs Guard&apos;s advanced
+          analytics are coming soon. Join the waitlist!
         </motion.p>
 
         {/* ✉️ E-pasta abonēšana */}
@@ -131,15 +131,15 @@ export default function ComingSoon() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.8 }}
-          className="flex flex-col items-center w-full max-w-md sm:max-w-lg  relative z-10"
+          className="flex flex-col items-center w-full max-w-md md:max-w-lg relative z-10"
         >
-          <div className="flex flex-col sm:flex-row gap-2 items-center bg-gray-800 p-2 rounded-lg w-full max-w-md sm:max-w-lg sm:gap-1">
+          <div className="flex flex-col md:flex-row gap-2 items-center bg-gray-800 p-2 rounded-lg w-full max-w-md md:max-w-lg md:gap-1">
             <input
               type="email"
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="flex-grow  w-full sm:w-3/4 px-4 py-3 bg-gray-900 text-white rounded-lg outline-none border border-gray-700 focus:border-purple-500 transition relative z-10"
+              className="flex-grow  w-full md:w-3/4 px-4 py-3 bg-gray-900 text-white rounded-lg outline-none border border-gray-700 focus:border-purple-500 transition relative z-10"
             />
             <button
               onClick={handleSubscribe}
@@ -159,8 +159,8 @@ export default function ComingSoon() {
           )}
           <p className="text-xs text-gray-400 mt-2">
             By subscribing, you agree to our{" "}
-            <Link href="en/terms" className="text-purple-400 hover:underline">
-              Terms & Conditions
+            <Link href="/terms" className="text-purple-400 hover:underline">
+              Terms of Service
             </Link>{" "}
             and{" "}
             <Link href="/privacy" className="text-purple-400 hover:underline">
@@ -181,8 +181,8 @@ export default function ComingSoon() {
         </motion.div>
 
         {/* 🔵 Dekoratīvā gaisma */}
-        <div className="absolute top-10 left-10 w-96 h-96 bg-purple-700 rounded-full filter blur-[100px] opacity-20 -z-0"></div>
-        <div className="absolute bottom-10 right-10 w-80 h-80 bg-indigo-700 rounded-full filter blur-[100px] opacity-20 -z-0"></div>
+        <div className="absolute top-10 left-10 w-40 h-40 max-w-[40vw] max-h-[40vh] bg-purple-700 rounded-full filter blur-[80px] opacity-20 -z-0"></div>
+        <div className="absolute bottom-10 right-10 w-40 h-40 max-w-[40vw] max-h-[40vh] bg-indigo-700 rounded-full filter blur-[80px] opacity-20 -z-0"></div>
       </div>
     </>
   );

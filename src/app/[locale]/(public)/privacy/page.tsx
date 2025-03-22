@@ -22,7 +22,7 @@ const ScrollToTop = () => {
     <button
       id="scrollToTopBtn"
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-      className="fixed bottom-5 right-5 bg-gray-700 hover:bg-gray-800 text-white p-3 rounded-full shadow-lg hidden transition-opacity duration-300"
+      className="fixed bottom-5 right-5 bg-gray-700 hover:bg-gray-600 text-white p-3 min-w-12 min-h-12 rounded-full shadow-lg hidden transition-opacity duration-300"
       aria-label="Scroll to top"
     >
       ↑
@@ -33,7 +33,7 @@ const ScrollToTop = () => {
 const BackButton = () => (
   <Link
     href="/"
-    className="absolute top-5 left-5 bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg shadow-md transition-colors duration-200"
+    className="fixed bottom-5 sm:top-5 sm:bottom-auto left-5 bg-gray-700 hover:bg-gray-600 text-white px-4 py-3 rounded-full min-h-12 md:min-h-0 shadow-lg transition-colors duration-200"
   >
     ← Back
   </Link>
@@ -67,14 +67,16 @@ export default function PrivacyPolicy() {
 
       {/* Galvenes sadaļa */}
       <header className="w-full py-10 bg-gradient-to-r from-gray-800 to-gray-900 text-center">
-        <h1 className="text-5xl font-extrabold text-white">Privacy Policy</h1>
+        <h1 className="text-4xl md:text-6xl font-extrabold text-white">
+          Privacy Policy
+        </h1>
         <p className="mt-4 text-gray-300 text-lg">Last Updated: March 2025</p>
       </header>
 
       {/* Galvenais saturs ar flex layout */}
       <div className="container mx-auto flex flex-col md:flex-row px-6 py-12">
         {/* Sānu navigācija */}
-        <nav className="w-full md:w-1/4 mb-8 md:mb-0 md:pr-8">
+        <nav className="hidden md:block md:w-1/4 md:pr-8 min-w-[260px]">
           <div className="sticky top-24 bg-gray-800 p-6 rounded-lg shadow-md">
             <ul className="space-y-3 text-lg text-gray-300 mb-6 max-w-full">
               {[
@@ -109,7 +111,7 @@ export default function PrivacyPolicy() {
           {[
             {
               id: "introduction",
-              title: "Introduction",
+              title: "",
               content: (
                 <>
                   <p className="text-lg text-gray-300 mb-6 max-w-full">

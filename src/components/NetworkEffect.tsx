@@ -16,8 +16,8 @@ export default function BlockchainNetwork() {
 
     function resizeCanvas() {
       if (!canvas) return;
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      canvas.width = document.documentElement.clientWidth;
+      canvas.height = document.documentElement.clientHeight;
     }
 
     resizeCanvas();
@@ -26,7 +26,7 @@ export default function BlockchainNetwork() {
     // Palielinām daļiņu skaitu un ātrumu efektam
     if (particlesRef.current.length === 0) {
       particlesRef.current = Array.from({ length: 80 }).map(() => ({
-        x: Math.random() * canvas.width,
+        x: Math.random() * canvas.width * 0.9,
         y: Math.random() * canvas.height * 0.9,
         vx: (Math.random() - 0.5) * 0.8, // 🚀 Ātrākas kustības
         vy: (Math.random() - 0.5) * 0.8, // 🚀 Ātrākas kustības
@@ -81,7 +81,7 @@ export default function BlockchainNetwork() {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed top-0 left-200 w-full h-full object-cover pointer-events-none z-0"
+      className="fixed inset-0 w-screen h-screen object-cover pointer-events-none z-0"
     />
   );
 }

@@ -51,9 +51,9 @@ const Logo: React.FC<LogoProps> = ({
         className={`${michroma.className} font-extrabold`}
         style={{ fontSize: `${textSize}px` }} // ✅ Pielāgo teksta izmēru dinamiski
       >
-        <div className="flex flex-col m-0 p-0">
-          <span className={colorVariants[color]}>NFTs</span>
-          <span className={`text-sm p-0 m-0 ${colorVariants[color]}`}>
+        <div className="flex flex-col tracking-tight leading-tight">
+          <span className={`${colorVariants[color]} text-[27px]`}>NFTs</span>
+          <span className={`text-[19px] p-0 m-0 ${colorVariants[color]}`}>
             GUARD
           </span>
         </div>
