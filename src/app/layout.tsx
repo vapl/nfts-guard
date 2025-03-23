@@ -7,6 +7,8 @@ import "@/app/globals.css";
 import { LayoutProps } from "@/types/layout";
 import Script from "next/script";
 import { GA_TRACKING_ID } from "@/lib/gtag";
+import CookieConsent from "@/components/CookieConsent";
+import AnalyticsTracker from "@/components/AnaliticsTracker";
 
 // Fontu inicializācija
 const geistSans = Geist({
@@ -57,7 +59,11 @@ export default async function RootLayout({ children, params }: LayoutProps) {
 
       <body className="antialiased bg-background text-text transition-colors duration-300">
         <ThemeProvider>
-          <ScanProvider>{children}</ScanProvider>
+          <ScanProvider>
+            {children}
+            <AnalyticsTracker />
+            <CookieConsent />
+          </ScanProvider>
         </ThemeProvider>
       </body>
     </html>
