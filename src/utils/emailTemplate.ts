@@ -1,6 +1,6 @@
 export const generateSubscribeEmailContent = () => {
   return `
-    <div
+   <div
       style="
         background-color: #f4f4f4;
         font-family: Helvetica, Arial, sans-serif;
@@ -80,128 +80,198 @@ export const generateSubscribeEmailContent = () => {
         <!-- Feature list -->
         <table
           role="presentation"
-          cellpadding="0"
+          cellpadding="10px"
           cellspacing="0"
-          width="100%"
-          style="border-collapse: collapse; margin-left: 16px"
+          width="95%"
+          style="border-collapse: collapse; margin: 16px"
         >
           <tbody>
             <tr>
-              <td style="padding-bottom: 12px">
+              <td
+                style="
+                  padding-bottom: 12px;
+                  box-sizing: border-box;
+                  border-bottom: 1px solid #b0b0b0;
+                  width: 100%;
+                  display: -webkit-inline-box;
+                "
+              >
                 <img
                   src="https://nftsguard.com/image/icons/shield-alert.png"
                   width="20"
                   alt=""
-                  style="vertical-align: middle; margin-right: 8px"
+                  style="vertical-align: middle; margin-right: 12px"
                 />
-                <strong style="color: #6d28d9">NFT Risk Score</strong><br />
-                <span style="font-size: 14px; color: #333; margin-left: 33px"
-                  >AI-based 1–100 risk level, price anomalies &amp; owner
-                  behavior</span
-                >
+                <div>
+                  <strong style="color: #6d28d9">NFT Risk Score</strong><br />
+                  <span style="font-size: 14px; color: #333"
+                    >AI-based 1–100 risk level, price anomalies &amp; owner
+                    behavior</span
+                  >
+                </div>
               </td>
             </tr>
             <tr>
-              <td style="padding-bottom: 12px">
+              <td
+                style="
+                  padding-bottom: 12px;
+                  box-sizing: border-box;
+                  border-bottom: 1px solid #b0b0b0;
+                  width: 100%;
+                  display: -webkit-inline-box;
+                "
+              >
                 <img
                   src="https://nftsguard.com/image/icons/repeat.png"
                   width="20"
                   alt=""
-                  style="vertical-align: middle; margin-right: 8px"
+                  style="vertical-align: middle; margin-right: 12px"
                 />
-                <strong style="color: #6d28d9">Flip Risk Analysis</strong><br />
-                <span style="font-size: 14px; color: #333; margin-left: 33px"
-                  >Detect repeated NFT flips and market manipulation</span
-                >
+                <div>
+                  <strong style="color: #6d28d9">Flip Risk Analysis</strong
+                  ><br />
+                  <span style="font-size: 14px; color: #333"
+                    >Detect repeated NFT flips and market manipulation</span
+                  >
+                </div>
               </td>
             </tr>
             <tr>
-              <td style="padding-bottom: 12px">
+              <td
+                style="
+                  padding-bottom: 12px;
+                  box-sizing: border-box;
+                  border-bottom: 1px solid #b0b0b0;
+                  width: 100%;
+                  display: -webkit-inline-box;
+                "
+              >
                 <img
                   src="https://nftsguard.com/image/icons/trending-down.png"
                   width="20"
                   alt=""
-                  style="vertical-align: middle; margin-right: 8px"
+                  style="vertical-align: middle; margin-right: 12px"
                 />
-                <strong style="color: #6d28d9">Exit Scam Tracker</strong><br />
-                <span style="font-size: 14px; color: #333; margin-left: 33px"
-                  >Check for suspicious fund outflows, wallet drainage, price
-                  dumps</span
-                >
+                <div>
+                  <strong style="color: #6d28d9">Exit Scam Tracker</strong
+                  ><br />
+                  <span style="font-size: 14px; color: #333"
+                    >Check for suspicious fund outflows, wallet drainage, price
+                    dumps</span
+                  >
+                </div>
               </td>
             </tr>
             <tr>
-              <td style="padding-bottom: 12px">
+              <td
+                style="
+                  padding-bottom: 12px;
+                  box-sizing: border-box;
+                  border-bottom: 1px solid #b0b0b0;
+                  width: 100%;
+                  display: -webkit-inline-box;
+                "
+              >
                 <img
                   src="https://nftsguard.com/image/icons/receipt-text.png"
                   width="20"
                   alt=""
-                  style="vertical-align: middle; margin-right: 8px"
+                  style="vertical-align: middle; margin-right: 12px"
                 />
-                <strong style="color: #6d28d9">Contract Authenticity</strong
-                ><br />
-                <span style="font-size: 14px; color: #333; margin-left: 33px"
-                  >Compare mint dates, tx counts, and original contracts</span
-                >
+                <div>
+                  <strong style="color: #6d28d9">Contract Authenticity</strong
+                  ><br />
+                  <span style="font-size: 14px; color: #333"
+                    >Compare mint dates, tx counts, and original contracts</span
+                  >
+                </div>
               </td>
             </tr>
             <tr>
-              <td style="padding-bottom: 12px">
+              <td
+                style="
+                  padding-bottom: 12px;
+                  box-sizing: border-box;
+                  border-bottom: 1px solid #b0b0b0;
+                  width: 100%;
+                  display: -webkit-inline-box;
+                "
+              >
                 <img
                   src="https://nftsguard.com/image/icons/history.png"
                   width="20"
                   alt=""
-                  style="vertical-align: middle; margin-right: 8px"
+                  style="vertical-align: middle; margin-right: 12px"
                 />
-                <strong style="color: #6d28d9">Owner History</strong><br />
-                <span style="font-size: 14px; color: #333; margin-left: 33px"
-                  >Track past ownership, blacklisted wallets, frequency
-                  risks</span
-                >
+                <div>
+                  <strong style="color: #6d28d9">Owner History</strong><br />
+                  <span style="font-size: 14px; color: #333"
+                    >Track past ownership, blacklisted wallets, frequency
+                    risks</span
+                  >
+                </div>
               </td>
             </tr>
             <tr>
-              <td style="padding-bottom: 12px">
+              <td
+                style="
+                  padding-bottom: 12px;
+                  box-sizing: border-box;
+                  border-bottom: 1px solid #b0b0b0;
+                  width: 100%;
+                  display: -webkit-inline-box;
+                "
+              >
                 <img
                   src="https://nftsguard.com/image/icons/chart-column.png"
                   width="20"
                   alt=""
-                  style="vertical-align: middle; margin-right: 8px"
+                  style="vertical-align: middle; margin-right: 12px"
                 />
-                <strong style="color: #6d28d9">Price &amp; Liquidity</strong
-                ><br />
-                <span style="font-size: 14px; color: #333; margin-left: 33px"
-                  >Analyze market volume, average vs current price, flipping
-                  loops</span
-                >
+                <div>
+                  <strong style="color: #6d28d9">Price &amp; Liquidity</strong
+                  ><br />
+                  <span style="font-size: 14px; color: #333"
+                    >Analyze market volume, average vs current price, flipping
+                    loops</span
+                  >
+                </div>
               </td>
             </tr>
             <tr>
-              <td style="padding-bottom: 12px">
+              <td
+                style="
+                  padding-bottom: 12px;
+                  box-sizing: border-box;
+                  border-bottom: 1px solid #b0b0b0;
+                  width: 100%;
+                  display: -webkit-inline-box;
+                "
+              >
                 <img
                   src="https://nftsguard.com/image/icons/message-circle-heart.png"
                   width="20"
                   alt=""
-                  style="vertical-align: middle; margin-right: 8px"
+                  style="vertical-align: middle; margin-right: 12px"
                 />
-                <strong style="color: #6d28d9">Social Signals</strong><br />
-                <span style="font-size: 14px; color: #333; margin-left: 33px"
-                  >Track Twitter mentions, Discord activity &amp;
-                  engagement</span
-                >
+                <div>
+                  <strong style="color: #6d28d9">Social Signals</strong><br />
+                  <span style="font-size: 14px; color: #333"
+                    >Track Twitter mentions, Discord activity &amp;
+                    engagement</span
+                  >
+                </div>
               </td>
             </tr>
           </tbody>
         </table>
-
-        <hr style="width: 100%; color: #333; height: 0.8px" />
 
         <!-- Social icons -->
         <div style="text-align: center; margin-top: 30px">
           <a
             href="https://x.com/NFTsGuard"
             target="_blank"
-            style="margin-right: 30px"
+            style="display: inline-block; margin-right: 30px"
           >
             <img
               src="https://nftsguard.com/image/icons/xTwitter-social-icon.png"
@@ -209,7 +279,12 @@ export const generateSubscribeEmailContent = () => {
               alt="Twitter"
             />
           </a>
-          <a href="https://discord.gg/zqhEbgEsur" target="_blank">
+
+          <a
+            href="https://discord.gg/zqhEbgEsur"
+            target="_blank"
+            style="display: inline-block"
+          >
             <img
               src="https://nftsguard.com/image/icons/discord-social-icon.png"
               width="28"

@@ -29,9 +29,9 @@ export default async function handler(
     const emailContent = generateSubscribeEmailContent();
 
     const response = await resend.emails.send({
-      from: "info@nftsguard.com",
+      from: "NFTs Guard Team <info@nftsguard.com>",
       to: email,
-      subject: "🎉 Welcome to NFTs Guard!",
+      subject: "Welcome to NFTs Guard!",
       html: emailContent,
     });
 
