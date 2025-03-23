@@ -6,6 +6,7 @@ import "@/app/globals.css";
 
 import { LayoutProps } from "@/types/layout";
 import Script from "next/script";
+import { GA_TRACKING_ID } from "@/lib/gtag";
 
 // Fontu inicializācija
 const geistSans = Geist({
@@ -35,20 +36,20 @@ export default async function RootLayout({ children, params }: LayoutProps) {
       className={`${geistSans.variable} ${geistMono.variable} ${michroma.variable}`}
     >
       <head>
-        {/* Google tag (gtag.js) */}
+        {/* Google Analytics tag */}
         <Script
           strategy="afterInteractive"
-          src="https://www.googletagmanager.com/gtag/js?id=G-DMM184GK4N"
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`}
         />
         <Script
-          id="google-analytics"
+          id="gtag-init"
           strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
-              gtag('config', 'G-DMM184GK4N');
+              gtag('config', '${GA_TRACKING_ID}');
             `,
           }}
         />
