@@ -41,7 +41,9 @@ export default function ComingSoon() {
       return;
     }
 
-    const { error } = await supabase.from("subscribers").insert([{ email }]);
+    const { error } = await supabase
+      .from("subscribers")
+      .insert([{ email, source: "coming_soon" }]);
 
     if (error) {
       setMessage("This email is already subscribed!");
