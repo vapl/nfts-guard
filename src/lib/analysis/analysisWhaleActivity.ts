@@ -1,25 +1,108 @@
 import { supabase } from "@/lib/supabase";
-import { NFTWhaleActivityProps } from "@/types/apiTypes/globalApiTypes";
+import {
+  NFTWhaleActivityProps,
+  WhaleStats,
+  WhaleStatsTopWhale,
+} from "@/types/apiTypes/globalApiTypes";
 import { saveWhaleActivityToSupabase } from "@/lib/dataStorage/saveWhaleActivity";
+import { upsertWhaleStatsToSupabase } from "../dataStorage/upsertWhaleStatsToSupabase";
 
 const PAGE_SIZE = 500;
 
-/**
- * Fetch, analyze, and save NFT whale activity to the database
- */
+export function generateWhaleStats(
+  whaleData: NFTWhaleActivityProps[]
+): WhaleStats {
+  const totalWhales = whaleData.length;
+
+  let totalBuys = 0;
+  let totalSells = 0;
+  let totalTransfers = 0;
+  let totalEthSpent = 0;
+  let totalHoldTime = 0;
+  let totalVolatility = 0;
+  let holdTimeCount = 0;
+  let volatilityCount = 0;
+
+  const typeCounts: Record<string, number> = {};
+  let topWhale: WhaleStatsTopWhale | undefined;
+
+  for (const whale of whaleData) {
+    totalBuys += whale.whale_buys;
+    totalSells += whale.whale_sells;
+    totalTransfers += whale.whale_transfers;
+    totalEthSpent += whale.total_eth_spent;
+
+    if (whale.avg_hold_time > 0) {
+      totalHoldTime += whale.avg_hold_time;
+      holdTimeCount++;
+    }
+
+    if (whale.price_volatility > 0) {
+      totalVolatility += whale.price_volatility;
+      volatilityCount++;
+    }
+
+    typeCounts[whale.whale_type] = (typeCounts[whale.whale_type] || 0) + 1;
+
+    if (!topWhale || whale.total_eth_spent > topWhale.total_eth_spent) {
+      topWhale = {
+        wallet: whale.wallet,
+        whale_type: whale.whale_type,
+        total_eth_spent: whale.total_eth_spent,
+        total_activity: whale.total_activity ?? 0,
+      };
+    }
+  }
+
+  return {
+    activityLog: [],
+    totalWhales,
+    totalBuys,
+    totalSells,
+    totalTransfers,
+    totalEthSpent: parseFloat(totalEthSpent.toFixed(4)),
+    avgHoldTime: holdTimeCount
+      ? parseFloat((totalHoldTime / holdTimeCount).toFixed(2))
+      : 0,
+    avgVolatility: volatilityCount
+      ? parseFloat((totalVolatility / volatilityCount).toFixed(4))
+      : 0,
+    typeCounts,
+    topWhale,
+  };
+}
+
+interface GetNFTWhaleActivityResult {
+  whaleActivity: NFTWhaleActivityProps[];
+  whaleStats: WhaleStats;
+}
+
 export async function getNFTWhaleActivity(
   contractAddress: string,
   timePeriod: number
-): Promise<NFTWhaleActivityProps[]> {
+): Promise<GetNFTWhaleActivityResult> {
   try {
     console.log(`🔎 Checking whale activity for contract: ${contractAddress}`);
+
+    function generateActivityLog(
+      salesData: { timestamp: string; price: number }[]
+    ): { date: string; eth: number }[] {
+      const map = new Map<string, number>();
+
+      for (const sale of salesData) {
+        const date = new Date(sale.timestamp).toISOString().slice(0, 10);
+        const eth = sale.price || 0;
+        map.set(date, (map.get(date) || 0) + eth);
+      }
+
+      return Array.from(map.entries()).map(([date, eth]) => ({ date, eth }));
+    }
 
     const nowTimestamp = Math.floor(Date.now() / 1000);
     const requestedStartTimestamp = new Date(
       (nowTimestamp - timePeriod * 24 * 60 * 60) * 1000
     ).toISOString();
 
-    // ✅ Fetch whale wallets
     const { data: whaleOwners, error: ownersError } = await supabase
       .from("nft_owners")
       .select("wallet")
@@ -27,33 +110,42 @@ export async function getNFTWhaleActivity(
       .eq("is_whale", true);
 
     if (ownersError) throw new Error("❌ Error fetching whale owners");
-    if (!whaleOwners?.length) return [];
+    if (!whaleOwners?.length)
+      return {
+        whaleActivity: [],
+        whaleStats: {
+          activityLog: [],
+          totalWhales: 0,
+          totalBuys: 0,
+          totalSells: 0,
+          totalTransfers: 0,
+          totalEthSpent: 0,
+          avgHoldTime: 0,
+          avgVolatility: 0,
+          typeCounts: {},
+          topWhale: undefined,
+        },
+      };
+
+    interface SalesAggregateData {
+      total_eth_spent: number;
+      total_usd_spent: number;
+      hold_times: number[];
+      price_volatility: number[];
+    }
 
     const whaleWallets = whaleOwners.map((o) => o.wallet);
     let offset = 0;
     let allWhaleActivity: NFTWhaleActivityProps[] = [];
     const whaleTransfersMap: Record<string, Set<string>> = {};
     const whaleNetworkMap: Record<string, Set<string>> = {};
-    const salesMap: Record<
-      string,
-      {
-        total_eth_spent: number;
-        total_usd_spent: number;
-        hold_times: number[];
-        price_volatility: number[];
-      }
-    > = {};
+    const salesMap: Record<string, SalesAggregateData> = {};
 
-    // ✅ Fetch sales data for ETH and USD spending
-    const { data: salesData, error: salesError } = await supabase
+    const { data: salesData } = await supabase
       .from("nft_sales")
       .select("from_wallet, to_wallet, price, usd_price, timestamp")
       .eq("contract_address", contractAddress)
       .gte("timestamp", requestedStartTimestamp);
-
-    console.log(`📊 Total NFT sales found: ${salesData?.length}`);
-
-    if (salesError) console.warn("⚠️ Error fetching sales data.");
 
     salesData?.forEach((sale) => {
       const buyTimestamp = new Date(sale.timestamp).getTime();
@@ -67,22 +159,15 @@ export async function getNFTWhaleActivity(
           price_volatility: [],
         };
       }
+
       salesMap[sale.to_wallet].hold_times.push(holdTime);
       salesMap[sale.to_wallet].total_eth_spent += sale.price || 0;
       salesMap[sale.to_wallet].total_usd_spent += sale.usd_price || 0;
-
-      if (sale.price) {
+      if (sale.price)
         salesMap[sale.to_wallet].price_volatility.push(sale.price);
-      }
     });
 
     while (true) {
-      console.log(
-        `📡 Fetching whale transfers from ${offset} to ${
-          offset + PAGE_SIZE - 1
-        }`
-      );
-
       const { data: whaleTransfers, error: transfersError } = await supabase
         .from("nft_transfers")
         .select("from_wallet, to_wallet, timestamp")
@@ -90,21 +175,31 @@ export async function getNFTWhaleActivity(
         .gte("timestamp", requestedStartTimestamp)
         .range(offset, offset + PAGE_SIZE - 1);
 
-      if (transfersError) {
-        console.error("❌ Error fetching whale transfers:", transfersError);
-        return [];
-      }
-
+      if (transfersError)
+        return {
+          whaleActivity: [],
+          whaleStats: {
+            activityLog: [],
+            totalWhales: 0,
+            totalBuys: 0,
+            totalSells: 0,
+            totalTransfers: 0,
+            totalEthSpent: 0,
+            avgHoldTime: 0,
+            avgVolatility: 0,
+            typeCounts: {},
+            topWhale: undefined,
+          },
+        };
       if (!whaleTransfers?.length) break;
-      console.log(`📊 Retrieved ${whaleTransfers.length} transfers`);
 
       const activityMap: Record<string, NFTWhaleActivityProps> = {};
 
       for (const tx of whaleTransfers) {
         const isBuyerWhale = whaleWallets.includes(tx.to_wallet);
         const isSellerWhale = whaleWallets.includes(tx.from_wallet);
-
         if (!isBuyerWhale && !isSellerWhale) continue;
+
         const wallet = isBuyerWhale ? tx.to_wallet : tx.from_wallet;
 
         if (!activityMap[wallet]) {
@@ -126,21 +221,14 @@ export async function getNFTWhaleActivity(
           };
         }
 
-        if (isBuyerWhale) {
-          activityMap[wallet].whale_buys++;
-        }
-
+        if (isBuyerWhale) activityMap[wallet].whale_buys++;
         if (isSellerWhale) {
           activityMap[wallet].whale_sells++;
-          if (!whaleTransfersMap[wallet]) {
-            whaleTransfersMap[wallet] = new Set();
-          }
+          whaleTransfersMap[wallet] ||= new Set();
           whaleTransfersMap[wallet].add(tx.to_wallet);
 
           if (whaleWallets.includes(tx.to_wallet)) {
-            if (!whaleNetworkMap[wallet]) {
-              whaleNetworkMap[wallet] = new Set();
-            }
+            whaleNetworkMap[wallet] ||= new Set();
             whaleNetworkMap[wallet].add(tx.to_wallet);
           }
         }
@@ -157,11 +245,12 @@ export async function getNFTWhaleActivity(
         hold_times: [],
         price_volatility: [],
       };
-      const avgHoldTime =
-        spendingData.hold_times.length > 0
-          ? spendingData.hold_times.reduce((a, b) => a + b, 0) /
-            spendingData.hold_times.length
-          : 0;
+
+      const avgHoldTime = spendingData.hold_times.length
+        ? spendingData.hold_times.reduce((a: number, b: number) => a + b, 0) /
+          spendingData.hold_times.length
+        : 0;
+
       const priceVolatility =
         spendingData.price_volatility.length > 1
           ? Math.max(...spendingData.price_volatility) -
@@ -189,12 +278,32 @@ export async function getNFTWhaleActivity(
       };
     });
 
-    // ✅ Saglabājam datus datubāzē
-    saveWhaleActivityToSupabase(allWhaleActivity);
+    const whaleStats = generateWhaleStats(allWhaleActivity);
+    whaleStats.activityLog = generateActivityLog(salesData || []);
 
-    return allWhaleActivity;
+    saveWhaleActivityToSupabase(allWhaleActivity);
+    upsertWhaleStatsToSupabase(contractAddress, whaleStats);
+
+    return {
+      whaleActivity: allWhaleActivity,
+      whaleStats,
+    };
   } catch (error) {
     console.error("❌ Error fetching NFT whale activity:", error);
-    return [];
+    return {
+      whaleActivity: [],
+      whaleStats: {
+        activityLog: [],
+        totalWhales: 0,
+        totalBuys: 0,
+        totalSells: 0,
+        totalTransfers: 0,
+        totalEthSpent: 0,
+        avgHoldTime: 0,
+        avgVolatility: 0,
+        typeCounts: {},
+        topWhale: undefined,
+      },
+    };
   }
 }

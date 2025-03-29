@@ -3,7 +3,16 @@ const nextConfig = {
   reactStrictMode: true,
 
   images: {
-    domains: ["boredapeyachtclub.com", "larvalabs.com", "opensea.io"], // Pievieno visus NFT attēlu hostus
+    domains: [
+      "boredapeyachtclub.com",
+      "larvalabs.com",
+      "opensea.io",
+      "img.reservoir.tools",
+      "i.seadn.io",
+      "res.cloudinary.com",
+      "ipfs.io",
+      "static.reservoir.tools",
+    ], // Pievieno visus NFT attēlu hostus
   },
 
   async redirects() {

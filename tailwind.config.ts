@@ -1,52 +1,45 @@
-/** @type {import('tailwindcss').Config} */
-import { fontFamily } from "tailwindcss/defaultTheme";
+import type { Config } from "tailwindcss";
+import defaultTheme from "tailwindcss/defaultTheme";
+import scrollbar from "tailwind-scrollbar";
 
-// eslint-disable-next-line import/no-anonymous-default-export
-export default {
+const config: Config = {
   darkMode: "class",
-  content: [
-    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
-  ],
+  content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
   theme: {
     extend: {
-      animation: {
-        fadeIn: "fadeIn 1s ease-in-out",
-      },
-      keyframes: {
-        fadeIn: {
-          "0%": { opacity: "0" },
-          "100%": { opacity: "1" },
-        },
-      },
       fontFamily: {
-        sans: ["var(--font-geist-sans)", ...fontFamily.sans],
-        mono: ["var(--font-geist-mono)", ...fontFamily.mono],
+        sans: ["var(--font-geist-sans)", ...defaultTheme.fontFamily.sans],
+        mono: ["var(--font-geist-mono)", ...defaultTheme.fontFamily.mono],
       },
       colors: {
-        primary: "#8B5CF6",
-        secondary: "#F59E0B",
         background: {
-          DEFAULT: "#0a0a20",
-          light: "#ffffff",
-          dark: "#0a0a20",
+          light: "#ffffff", // Gaišā tēma
+          dark: "#0a0a20", // Tumšā tēma
         },
         text: {
-          DEFAULT: "#E5E7EB",
-          light: "#374151",
-          dark: "#ffffff",
+          light: "#1a1a1a", // Gaišā tēma (tumši pelēks teksts)
+          dark: "#E5E7EB", // Tumšā tēma (gaiši pelēks teksts)
+        },
+        primary: {
+          light: "#7C3AED", // Gaišā tēma (nedaudz gaišāka violeta)
+          dark: "#8B5CF6", // Tumšā tēma
+        },
+        secondary: {
+          light: "#D97706", // Gaišā tēma (nedaudz tumšāka oranža)
+          dark: "#F59E0B", // Tumšā tēma
+        },
+        card: {
+          light: "#f5f5f5", // Gaišā tēma (gaiši pelēka kartīte)
+          dark: "#1c1c3c", // Tumšā tēma (tumši zila kartīte)
         },
         accent: {
-          purple: "#9333EA",
-          orange: "#F97316",
-          blue: "#3B82F6",
+          light: "#e0e7ff", // Gaišā tēma (gaiši violets akcents)
+          dark: "#2a2a5a", // Tumšā tēma (tumši violets akcents)
         },
-        gradientStart: "#0a0a20",
-        gradientMid: "#1c1c3a",
-        gradientEnd: "#3b3b6b",
       },
     },
   },
-  plugins: [],
+  plugins: [scrollbar],
 };
+
+export default config;

@@ -3,22 +3,7 @@ import reservoirClient from "@/lib/reservoir";
 import { NFTTransactionProps } from "@/types/apiTypes/globalApiTypes";
 import { saveSalesToSupabase } from "@/lib/dataStorage/saveSales";
 import { supabase } from "@/lib/supabase";
-
-/**
- * Interface for API response
- */
-interface SaleAPIResponse {
-  txHash: string;
-  token: { tokenId: string };
-  from: string;
-  to: string;
-  price: { amount: { native: number; usd?: number } };
-  block: number;
-  timestamp: number;
-  orderSource?: string;
-  washTradingScore?: number;
-  orderKind?: string;
-}
+import { SaleAPIResponse } from "@/types/apiTypes/globalApiTypes";
 
 /**
  * Fetch NFT sales history with Supabase caching.

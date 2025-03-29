@@ -14,10 +14,24 @@ export interface NFTTransactionProps {
   timestamp: string;
 }
 
+// Sales data
+export interface SaleAPIResponse {
+  txHash: string;
+  token: { tokenId: string };
+  from: string;
+  to: string;
+  price: { amount: { native: number; usd?: number } };
+  block: number;
+  timestamp: number;
+  orderSource?: string;
+  washTradingScore?: number;
+  orderKind?: string;
+}
+
 // Collection data properties
 export interface CollectionDataProps {
-  contract_address: string;
-  name: string;
+  contract_address?: string;
+  name?: string;
   image_url?: string;
   owner_count?: number;
   total_supply?: number;
@@ -27,10 +41,10 @@ export interface CollectionDataProps {
   floor_price_change_24h?: number;
   floor_price_change_7d?: number;
   floor_price_change_30d?: number;
-  volume_1day: number;
-  volume_7day: number;
-  volume_30day: number;
-  volume_all: number;
+  volume_1day?: number;
+  volume_7day?: number;
+  volume_30day?: number;
+  volume_all?: number;
   volume_change_24h?: number;
   volume_change_7d?: number;
   volume_change_30d?: number;
@@ -81,4 +95,104 @@ export interface NFTWhaleActivityProps {
   rug_pull_sell?: boolean; // Vai valis pārdeva NFT pēc floor price krituma
   whale_type: string;
   last_updated: string; // Pēdējais datu atjaunināšanas laiks
+}
+
+export interface WhaleStatsTopWhale {
+  wallet: string;
+  whale_type: string;
+  total_eth_spent: number;
+  total_activity: number;
+}
+
+export interface WhaleStats {
+  totalWhales: number;
+  totalBuys: number;
+  totalSells: number;
+  totalTransfers: number;
+  totalEthSpent: number;
+  avgHoldTime: number;
+  avgVolatility: number;
+  typeCounts: Record<string, number>;
+  topWhale?: WhaleStatsTopWhale;
+  activityLog: { date: string; eth: number }[];
+}
+
+export interface GetNFTWhaleActivityResult {
+  whaleStats: WhaleStats;
+}
+
+// export interface CollectionDataProps {
+//   name: string;
+//   image_url?: string;
+//   owner_count: number;
+//   floor_price: number;
+//   volume_7day: number;
+//   total_supply: number;
+//   on_sale_count: number;
+//   top_bid: number;
+//   volume_all: number;
+//   sales_count: number;
+//   floor_price_change_24h: number;
+//   floor_price_change_7d: number;
+//   floor_price_change_30d: number;
+// }
+
+export interface WashTradingResult {
+  washTradingIndex: number;
+  suspiciousSalesCount: number;
+  topWallets: { wallet: string; count: number }[];
+  details: {
+    frequentSales: number;
+    frequentSalesPercent: string;
+    quickSwapTrades: number;
+    quickSwapTradesPercent: string;
+    sameWalletTrades: number;
+    sameWalletTradesPercent: string;
+    totalSales: number;
+  };
+  analysis: string;
+}
+
+export interface RugPullResult {
+  risk_level: "Low" | "Medium" | "High";
+  whale_drop_percent: number;
+  large_transfers: number;
+  floor_price_24h: number;
+  floor_price_7d: number;
+  floor_price_30d: number;
+  unique_sellers: number;
+  unique_buyers: number;
+  seller_to_buyer_ratio: string;
+}
+
+export interface ScannerResultsProps {
+  contractAddress: string;
+  collectionData: CollectionDataProps;
+  washTradingAnalysis: WashTradingResult;
+  rugPullAnalysis: RugPullResult;
+  safetyScore: number;
+  riskLevel: "Low" | "Medium" | "High" | "N/A";
+  whaleActivityAnalysis: {
+    whaleStats: WhaleStats;
+    whaleActivity: NFTWhaleActivityProps;
+  };
+}
+
+export interface searchSuggestionProps {
+  id: string;
+  name?: string;
+  image?: string;
+  symbol?: string;
+  collectionId: string;
+}
+
+export interface ScanResultCardProps {
+  title: string;
+  value: string;
+  highlight?: string;
+  details?: string[];
+  image?: string;
+  icon?: React.ReactNode;
+  variant?: string;
+  chart?: React.ReactNode;
 }

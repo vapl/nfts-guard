@@ -1,9 +1,11 @@
 import { detectWashTrading } from "@/lib/analysis/detectWashTrading";
-import { getCollectionData } from "./getReservoirCollections";
-import { getNFTSales } from "./getReservoirSales";
-import { getNFTTransfers } from "./getReservoirTransfers";
-import { getNFTCollectionOwners } from "./getReservoirCollectionOwners";
-import { detectRugPull } from "./analysis/detectRugPull";
+import { getCollectionData } from "@/lib/getReservoirCollections";
+import { getNFTSales } from "@/lib/getReservoirSales";
+import { getNFTTransfers } from "@/lib/getReservoirTransfers";
+import { getNFTCollectionOwners } from "@/lib/getReservoirCollectionOwners";
+import { detectRugPull } from "@/lib//analysis/detectRugPull";
+import { getNFTWhaleActivity } from "@/lib/analysis/analysisWhaleActivity";
+import { calculateSafetyScore } from "./analysis/calculateSafetyScore";
 
 /**
  * ✅ Fetches and stores all NFT-related data for a given contract address
@@ -57,6 +59,22 @@ export async function fetchAndAnalyzeNFTData(
     const rugPullAnalysis = await detectRugPull(contractAddress, timePeriod);
     console.log("✅ Rug Pull Analysis Completed:", rugPullAnalysis);
 
+    // Izsauc Whale Activity analīzi
+    const whaleActivityAnalysis = await getNFTWhaleActivity(
+      contractAddress,
+      timePeriod
+    );
+    console.log("Whale activity analysis completed: ", whaleActivityAnalysis);
+
+    const safetyScore = calculateSafetyScore({
+      rugPullRiskLevel: rugPullAnalysis.risk_level as "Low" | "Medium" | "High",
+      washTradingIndex: washTradingAnalysis.washTradingIndex ?? 0,
+      whaleDumpPercent: Number(rugPullAnalysis.whale_drop_percent ?? 0),
+    });
+
+    const riskLevel =
+      safetyScore >= 70 ? "Low" : safetyScore >= 40 ? "Medium" : "High";
+
     console.log("🎯 All data successfully fetched, stored, and analyzed!");
     return {
       collectionData,
@@ -65,6 +83,9 @@ export async function fetchAndAnalyzeNFTData(
       ownersData,
       washTradingAnalysis,
       rugPullAnalysis,
+      whaleActivityAnalysis,
+      safetyScore,
+      riskLevel,
     };
   } catch (error) {
     console.error("❌ Error fetching, storing, or analyzing NFT data:", error);

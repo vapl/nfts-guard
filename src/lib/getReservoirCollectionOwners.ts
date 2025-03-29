@@ -4,10 +4,10 @@ import { supabase } from "@/lib/supabase";
 import { NFTCollectionOwnerProps } from "@/types/apiTypes/globalApiTypes";
 import { saveOwnersToSupabase } from "@/lib/dataStorage/saveOwners";
 
-const WHALE_THRESHOLD = 1;
+const WHALE_THRESHOLD = 0;
 const PAGE_SIZE = 500;
 const MAX_RETRIES = 3;
-const RETRY_DELAY = 3000; // 3 seconds
+const RETRY_DELAY = 1000;
 const MAX_ITERATIONS = 20; // ✅ Limit API requests
 
 /**

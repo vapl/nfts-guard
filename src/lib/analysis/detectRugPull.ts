@@ -98,10 +98,34 @@ async function detectRugPull(contractAddress: string, days: number = 30) {
     await getFloorPrice(contractAddress);
 
   // ✅ 4️⃣ Analizē NFT pārsūtījumus
+  async function getCollectionMetadata(
+    contractAddress: string
+  ): Promise<{ total_supply: number }> {
+    const { data, error } = await supabase
+      .from("nft_collections")
+      .select("total_supply")
+      .eq("contract_address", contractAddress)
+      .single();
+
+    if (error || !data) {
+      console.warn("⚠️ No total_supply found, using default fallback.");
+      return { total_supply: 10000 }; // drošs defaults
+    }
+
+    return { total_supply: data.total_supply };
+  }
+
+  const { total_supply } = await getCollectionMetadata(contractAddress);
+
+  // Uzskati par "lielu pārsūtījumu" jebko, kas pārsniedz 1% no kolekcijas vai vismaz 2 tokenus
+  const largeTransferThreshold = Math.max(Math.floor(total_supply * 0.01), 2);
+
   const transfers = await getNFTTransfers(contractAddress, days);
   const uniqueSellers = new Set(transfers.map((t) => t.from_wallet));
   const uniqueBuyers = new Set(transfers.map((t) => t.to_wallet));
-  const largeTransfers = transfers.filter((t) => t.amount > 10).length;
+  const largeTransfers = transfers.filter(
+    (t) => t.amount > largeTransferThreshold
+  ).length;
   const sellerToBuyerRatio = uniqueSellers.size / (uniqueBuyers.size || 1);
 
   // ✅ 5️⃣ Noteikšana, vai pastāv Rug Pull risks
@@ -139,15 +163,15 @@ async function detectRugPull(contractAddress: string, days: number = 30) {
   });
 
   return {
-    riskLevel: rugPullRisk,
-    whaleDropPercent: whaleDropPercent.toFixed(2),
-    floorPrice24h: floor_price_24h,
-    floorPrice7d: floor_price_7d,
-    floorPrice30d: floor_price_30d,
-    uniqueSellers: uniqueSellers.size,
-    uniqueBuyers: uniqueBuyers.size,
-    largeTransfers,
-    sellerToBuyerRatio: sellerToBuyerRatio.toFixed(2),
+    risk_level: rugPullRisk,
+    whale_drop_percent: whaleDropPercent.toFixed(2),
+    floor_price_24h: floor_price_24h,
+    floor_price_7d: floor_price_7d,
+    floor_price_30d: floor_price_30d,
+    unique_sellers: uniqueSellers.size,
+    unique_buyers: uniqueBuyers.size,
+    large_transfers: largeTransfers,
+    seller_to_buyer_ratio: sellerToBuyerRatio.toFixed(2),
   };
 }
 

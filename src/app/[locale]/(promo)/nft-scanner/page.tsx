@@ -8,8 +8,9 @@ import FAQSection from "@/components/FaqSection";
 import NewsletterSection from "@/components/NewsLetterSection";
 import Logo from "@/components/logo/Logo";
 import SocialIcons from "@/components/SocialIcons";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
+// import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useTranslations } from "@/context/TranslationContext";
+import ScannerPage from "@/components/scanner/ScannerPage";
 
 const benefits = [
   {
@@ -53,93 +54,13 @@ const steps = [
   },
 ];
 
-interface nftData {
-  name: string;
-  description: string;
-  owner: string;
-  image?: string;
-}
-
-interface EmailRequest {
-  email: string;
-  nftData: nftData;
-  contractAddress: string;
-}
-
 export default function HeroSection() {
   const { t } = useTranslations();
-  const [nftInput, setNftInput] = useState("");
   const [isAnimating, setIsAnimating] = useState(false);
-  const [isScanning, setIsScanning] = useState(false);
-  const [result, setResult] = useState<EmailRequest | null>(null);
-
-  const handleScan = async () => {
-    if (!nftInput.trim()) {
-      alert("Please enter an NFT contract address or token ID");
-      return;
-    }
-
-    // Extract contract address and token ID from input
-    const contractAddress = nftInput.includes(":")
-      ? nftInput.split(":")[0]
-      : nftInput;
-    const tokenId = nftInput.includes(":") ? nftInput.split(":")[1] : "1";
-    const userEmail = "nftsguard@gmail.com"; // This should be dynamic in the future
-
-    setIsScanning(true); // Show loading state
-    setResult(null); // Reset previous result
-
-    try {
-      const response = await fetch("/api/check-nft", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contractAddress,
-          tokenId,
-          email: userEmail,
-        }),
-      });
-
-      const data = await response.json();
-      if (data.error) {
-        alert("Error: " + data.error);
-      } else {
-        setResult(data);
-
-        const emailResponse = await fetch("/api/send-email", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: userEmail,
-            nftData: data,
-          }),
-        });
-
-        const emailData = await emailResponse.json();
-        console.log("Email API Response:", emailData);
-
-        if (emailData.error) {
-          alert("Email Error: " + emailData.error);
-        } else {
-          alert(
-            "NFT verification and email sent successfully! Check your inbox."
-          );
-        }
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      alert("Something went wrong. Please try again.");
-    }
-    setIsScanning(false);
-  };
 
   return (
     <>
-      <LanguageSwitcher />
+      {/* <LanguageSwitcher /> */}
       <section
         id="hero"
         className="relative flex flex-col items-center justify-center min-h-screen overflow-hidden text-white"
@@ -186,49 +107,10 @@ export default function HeroSection() {
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6, duration: 1 }}
-          >
-            <input
-              type="text"
-              placeholder="Enter NFT contract address or token ID"
-              value={nftInput}
-              onChange={(e) => setNftInput(e.target.value)}
-              className="w-full sm:w-3/4 px-5 py-4 rounded-lg bg-[#1c1c3c] text-white text-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-            />
-            <button
-              onClick={handleScan}
-              className="bg-gradient-to-r from-purple-600 to-indigo-500 hover:from-purple-700 hover:to-indigo-600 text-white font-bold px-8 py-4 rounded-lg shadow-lg text-lg transition transform hover:scale-105 text-nowrap"
-            >
-              {isScanning ? "Checking..." : "Try Demo Scan"}
-            </button>
-          </motion.div>
+          ></motion.div>
           {/* Display API response */}
-          {result && (
-            <div className="mt-8 bg-gray-900 p-4 rounded-lg text-white text-left">
-              <h3 className="text-xl font-semibold">Verification Result</h3>
-              <p>
-                <strong>Contract Address:</strong> {result.contractAddress}
-              </p>
-              <p>
-                <strong>NFT Name:</strong> {result.nftData.name}
-              </p>
-              <p>
-                <strong>Description:</strong> {result.nftData.description}
-              </p>
-              <p>
-                <strong>Owner:</strong> {result.nftData.owner}
-              </p>
-              {result.nftData.image && (
-                <Image
-                  src={result.nftData.image}
-                  alt="NFT Image"
-                  width={200}
-                  height={200}
-                  className="rounded-lg mt-4"
-                />
-              )}
-            </div>
-          )}
         </div>
+        <ScannerPage />
       </section>
 
       {/* Key benefits section */}
@@ -242,7 +124,7 @@ export default function HeroSection() {
           transition={{ duration: 0.8 }}
           className="text-center max-w-3xl mx-auto"
         >
-          <h2 className="text-5xl md:text-6xl font-extrabold leading-tight">
+          <h2 className="text-5xl md:text-7xl font-extrabold leading-tight">
             Why Choose <span className="text-purple-400">NFTs Guard?</span>
           </h2>
           <p className="text-lg text-gray-400 mt-4">

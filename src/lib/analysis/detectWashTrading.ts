@@ -1,63 +1,33 @@
 import { supabase } from "@/lib/supabase";
 import { NFTTransactionProps } from "@/types/apiTypes/globalApiTypes";
+import { getNFTSales } from "@/lib/getReservoirSales";
 
 /**
- * ✅ Fetches all NFT sales data from Supabase within a given period using pagination
- */
-async function getNFTSales(
-  contractAddress: string,
-  days: number
-): Promise<NFTTransactionProps[]> {
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - days); // Subtract days from today
-  let allSales: NFTTransactionProps[] = [];
-  let offset = 0;
-  const limit = 1000; // Supabase query limit
-
-  while (true) {
-    const { data, error } = await supabase
-      .from("nft_sales")
-      .select("*")
-      .eq("contract_address", contractAddress)
-      .gte("timestamp", startDate.toISOString())
-      .order("timestamp", { ascending: true })
-      .range(offset, offset + limit - 1);
-
-    if (error) {
-      console.error("❌ Error fetching NFT sales:", error);
-      break;
-    }
-
-    if (!data || data.length === 0) {
-      break; // No more data to fetch
-    }
-
-    allSales = [...allSales, ...data];
-    offset += limit;
-
-    if (data.length < limit) {
-      break; // If less than limit, it means no more records left
-    }
-  }
-
-  return allSales;
-}
-
-/**
- * ✅ Detects wash trading in NFT sales with optimized logic and calculates Wash Trading Index
+ * ✅ Detects wash trading with optimized logic and indexed access
  */
 async function detectWashTrading(contractAddress: string, days: number = 30) {
   console.log(
-    `🔎 Analyzing wash trading for: ${contractAddress} over ${days} days`
+    `🔍 Analyzing wash trading for ${contractAddress} over ${days} days`
   );
+
   const sales = await getNFTSales(contractAddress, days);
 
-  if (sales.length === 0) {
-    console.warn("⚠️ No sales data found for this period.");
+  if (!sales.length) {
+    console.warn("⚠️ No sales data found.");
     return {
       washTradingIndex: 0,
       suspiciousSalesCount: 0,
       analysis: "No wash trading detected.",
+      details: {},
+      topWallets: [],
+    };
+  }
+
+  if (sales.length < 20) {
+    return {
+      washTradingIndex: 0,
+      suspiciousSalesCount: 0,
+      analysis: "Too few transactions to assess wash trading accurately.",
       details: {},
       topWallets: [],
     };
@@ -68,43 +38,59 @@ async function detectWashTrading(contractAddress: string, days: number = 30) {
   let frequentSales = 0;
   const walletActivity: Record<string, number> = {};
 
+  // Index sales by token_id and from_wallet
+  const salesByToken = new Map<string, NFTTransactionProps[]>();
+  const salesByWallet = new Map<string, NFTTransactionProps[]>();
+
+  for (const sale of sales) {
+    const tokenSales = salesByToken.get(sale.token_id) || [];
+    tokenSales.push(sale);
+    salesByToken.set(sale.token_id, tokenSales);
+
+    const walletSales = salesByWallet.get(sale.from_wallet) || [];
+    walletSales.push(sale);
+    salesByWallet.set(sale.from_wallet, walletSales);
+  }
+
   const suspiciousSales = sales.filter((sale) => {
     const saleDate = new Date(sale.timestamp);
     let isSuspicious = false;
 
+    // A) Same wallet trade
     if (sale.from_wallet === sale.to_wallet) {
       sameWalletTrades++;
       isSuspicious = true;
     }
 
-    if (
-      sales.some(
-        (s) =>
-          s.token_id === sale.token_id &&
-          s.from_wallet === sale.to_wallet &&
-          s.to_wallet === sale.from_wallet &&
-          Math.abs(new Date(s.timestamp).getTime() - saleDate.getTime()) <
-            86400000
-      )
-    ) {
+    // B) Quick Swap (reverse trade in < 24h)
+    const tokenSales = salesByToken.get(sale.token_id) || [];
+    const quickSwap = tokenSales.some(
+      (s) =>
+        s.from_wallet === sale.to_wallet &&
+        s.to_wallet === sale.from_wallet &&
+        Math.abs(new Date(s.timestamp).getTime() - saleDate.getTime()) <
+          86400000
+    );
+    if (quickSwap) {
       quickSwapTrades++;
       isSuspicious = true;
     }
 
-    if (
-      sales.filter(
+    // C) Frequent sales from same wallet (3+ in <6h)
+    const walletSales = salesByWallet.get(sale.from_wallet) || [];
+    const frequent =
+      walletSales.filter(
         (s) =>
           s.token_id === sale.token_id &&
-          s.from_wallet === sale.from_wallet &&
           Math.abs(new Date(s.timestamp).getTime() - saleDate.getTime()) <
             21600000
-      ).length > 3
-    ) {
-      // Now checks for >3 sales in 6 hours
+      ).length > 3;
+    if (frequent) {
       frequentSales++;
       isSuspicious = true;
     }
 
+    // Register activity
     if (isSuspicious) {
       walletActivity[sale.from_wallet] =
         (walletActivity[sale.from_wallet] || 0) + 1;
@@ -122,6 +108,7 @@ async function detectWashTrading(contractAddress: string, days: number = 30) {
       100,
     100
   );
+
   const analysis =
     washTradingIndex > 50
       ? "High risk of wash trading detected. Many suspicious transactions found."
@@ -131,18 +118,16 @@ async function detectWashTrading(contractAddress: string, days: number = 30) {
 
   const sortedWallets = Object.entries(walletActivity)
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 5) // Top 5 wallets with most activity
+    .slice(0, 5)
     .map(([wallet, count]) => ({ wallet, count }));
 
   console.log(
-    `🚨 Detected ${
+    `🚨 ${
       suspiciousSales.length
-    } suspicious sales with a Wash Trading Index of ${washTradingIndex.toFixed(
-      2
-    )}!`
+    } suspicious sales detected (Index: ${washTradingIndex.toFixed(2)})`
   );
 
-  // ✅ Store results in Supabase
+  // Store result in Supabase
   await supabase.from("nft_wash_trading_results").insert({
     contract_address: contractAddress,
     wash_trading_index: washTradingIndex.toFixed(2),
