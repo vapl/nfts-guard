@@ -2,6 +2,9 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
+import Input from "./ui/Input";
+import Button from "./ui/Button";
+import { supabase } from "@/lib/supabase/supabase";
 
 interface NewsletterProps {
   headingText?: React.ReactNode;
@@ -9,17 +12,93 @@ interface NewsletterProps {
   ctaText?: string;
 }
 
+const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+const validateEmail = (email: string): boolean => {
+  return emailRegex.test(email);
+};
+
 const NewsletterSection: React.FC<NewsletterProps> = ({
   headingText = "Get Newsletter",
   bodyText = "Get updated with news, tips & tricks",
   ctaText = "Subscribe",
 }) => {
   const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<"success" | "error" | "">("");
 
-  const handleSubscribe = () => {
-    // Šeit var veikt formu validāciju un nosūtīt datus uz serveri, e-pastu sarakstu u.c.
-    alert(`Subscribed with email: ${email}`);
+  const clearMessageAfterDealay = () => {
+    setTimeout(() => {
+      setMessage("");
+      setMessageType("");
+    }, 5000);
+  };
+
+  const handleSubscribe = async () => {
+    if (!email) {
+      setMessage("Please enter a valid email.");
+      setMessageType("error");
+      clearMessageAfterDealay();
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      setMessage("Invalid email format. Please enter a valid email.");
+      setMessageType("error");
+      clearMessageAfterDealay();
+      return;
+    }
+
+    const { error } = await supabase
+      .from("subscribers")
+      .insert([{ email, source: "coming_soon" }]);
+
+    if (error) {
+      setMessage("This email is already subscribed!");
+      setMessageType("error");
+      setEmail("");
+      clearMessageAfterDealay();
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const result = await response.json();
+
+      const maskEmail = (email: string): string => {
+        const [name, domain] = email.split("@");
+        return `${name[0]}***@${domain.slice(0, 2)}***.${domain
+          .split(".")
+          .pop()}`;
+      };
+
+      if (response.ok) {
+        setMessage(
+          `Thank you for subscribing! A confirmation email has been sent to ${maskEmail(
+            email
+          )}.`
+        );
+        setMessageType("success");
+      } else {
+        setMessage("Subscription successful, but email could not be sent.");
+        setMessageType("error");
+        console.error("Email send error:", result.error);
+      }
+    } catch (error) {
+      setMessage("An error occurred while sending the confirmation email.");
+      setMessageType("error");
+      console.error("Error:", error);
+    }
+
     setEmail("");
+    clearMessageAfterDealay();
   };
 
   return (
@@ -33,13 +112,11 @@ const NewsletterSection: React.FC<NewsletterProps> = ({
         py-16 
         px-6 
         md:px-12 
-        text-white 
-        bg-[#1c1c3c]/50
+        text-text
         rounded-xl
         max-w-7xl 
         w-auto
         mx-auto
-        shadow-lg
       "
     >
       <motion.div
@@ -49,17 +126,16 @@ const NewsletterSection: React.FC<NewsletterProps> = ({
         transition={{ duration: 0.6 }}
         viewport={{ once: true }}
       >
-        <h2 className="text-5xl md:text-6xl font-extrabold mb-4">
+        <h2 className="text-5xl md:text-6xl text-heading font-extrabold mb-4">
           {headingText}
         </h2>
-        <p className="text-lg text-gray-300">{bodyText}</p>
+        <p className="text-lg text-paragraph">{bodyText}</p>
       </motion.div>
 
       <motion.div
         className="
           flex 
           flex-col 
-          md:flex-row 
           items-center 
           gap-4 
           mt-8 
@@ -71,48 +147,23 @@ const NewsletterSection: React.FC<NewsletterProps> = ({
         transition={{ duration: 0.6, delay: 0.2 }}
         viewport={{ once: true }}
       >
-        <input
+        <Input
           type="email"
-          placeholder="Your email"
-          className="
-            w-full 
-            flex-1 
-            px-5 
-            py-3 
-            rounded-lg 
-            bg-[#2a2a4f] 
-            text-white 
-            text-base 
-            focus:outline-none 
-            focus:ring-2 
-            focus:ring-purple-600
-          "
+          placeholder="Enter Your email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
-        <button
-          onClick={handleSubscribe}
-          className="
-            bg-gradient-to-r 
-            from-purple-600 
-            to-indigo-500 
-            hover:from-purple-700 
-            hover:to-indigo-600 
-            text-white 
-            font-semibold 
-            px-6 
-            py-3 
-            rounded-lg 
-            shadow-lg 
-            text-base 
-            transition 
-            transform 
-            hover:scale-105
-          "
-        >
-          {ctaText}
-        </button>
+        <Button label={ctaText} onClick={handleSubscribe} />
       </motion.div>
+      {messageType && (
+        <p
+          className={`mt-2 text-sm font-medium ${
+            messageType === "success" ? "text-green-400" : "text-red-400"
+          }`}
+        >
+          {message}
+        </p>
+      )}
     </section>
   );
 };

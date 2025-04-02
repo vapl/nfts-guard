@@ -2,33 +2,34 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import ScrollToTop from "@/components/ui/ScrollToTop";
 
-const ScrollToTop = () => {
-  useEffect(() => {
-    const scrollBtn = document.getElementById("scrollToTopBtn");
-    const handleScroll = () => {
-      if (window.scrollY > 300) {
-        scrollBtn?.classList.remove("hidden");
-      } else {
-        scrollBtn?.classList.add("hidden");
-      }
-    };
+// const ScrollToTop = () => {
+//   useEffect(() => {
+//     const scrollBtn = document.getElementById("scrollToTopBtn");
+//     const handleScroll = () => {
+//       if (window.scrollY > 300) {
+//         scrollBtn?.classList.remove("hidden");
+//       } else {
+//         scrollBtn?.classList.add("hidden");
+//       }
+//     };
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+//     window.addEventListener("scroll", handleScroll);
+//     return () => window.removeEventListener("scroll", handleScroll);
+//   }, []);
 
-  return (
-    <button
-      id="scrollToTopBtn"
-      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-      className="fixed bottom-5 right-5 bg-gray-700 hover:bg-gray-600 text-white p-3 min-w-12 min-h-12 rounded-full shadow-lg hidden transition-opacity duration-300"
-      aria-label="Scroll to top"
-    >
-      ↑
-    </button>
-  );
-};
+//   return (
+//     <button
+//       id="scrollToTopBtn"
+//       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+//       className="fixed bottom-5 right-5 bg-gray-700 hover:bg-gray-600 text-white p-3 min-w-12 min-h-12 rounded-full shadow-lg hidden transition-opacity duration-300"
+//       aria-label="Scroll to top"
+//     >
+//       ↑
+//     </button>
+//   );
+// };
 
 const BackButton = () => (
   <Link

@@ -54,6 +54,8 @@ export interface CollectionDataProps {
   floor_sale_7d?: number;
   floor_sale_30d?: number;
   last_updated?: string;
+  volatility_index: number;
+  volatility_risk_level: "Low" | "Medium" | "High";
 }
 
 // NFT transfer properties
@@ -71,6 +73,8 @@ export interface NFTTransferProps {
 
 // NFT collection owner properties
 export interface NFTCollectionOwnerProps {
+  contract_address?: string;
+  is_whale?: boolean;
   wallet: string;
   token_count: number;
   ownership_percentage: number;
@@ -190,9 +194,13 @@ export interface ScanResultCardProps {
   title: string;
   value: string;
   highlight?: string;
-  details?: string[];
+  details?: {
+    label: string;
+    value: number | string;
+  }[];
   image?: string;
   icon?: React.ReactNode;
   variant?: string;
   chart?: React.ReactNode;
+  tooltipInfo?: string;
 }

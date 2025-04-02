@@ -1,34 +1,155 @@
+/* @type postcss */
 @import "tailwindcss";
 
-/* Sakārto krāsu mainīgos */
-:root {
-  --background-light: #ffffff;
-  --foreground-light: #0a0a0a;
-  --background-dark: #0a0a20;
-  --foreground-dark: #ededed;
+/* Dark mode definīcija (jābūt ārpus layer) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* === Bāzes krāsu mainīgie === */
+@layer base {
+  :root {
+    --background: 255 255 255;
+    --text: 10 10 30;
+    --text-heading: 10 10 30; /* text-gray-800 */
+    --text-paragraph: 55 65 81; /* text-gray-700 */
+    --card: 243 244 246;
+    --primary: 124 58 237;
+    --secondary: 217 119 6;
+    --accent: 224 231 255;
+    --success: 34 197 94;
+    --warning: 250 204 21;
+    --danger: 239 68 68;
+    --input-bg: 239 241 255; /* gaišā režīma input fons */
+    --input-text: 51 65 85; /* #334155 - text-slate-700 */
+    --input-border: 203 213 225; /* #CBD5E1 - border-slate-300 */
+
+    /* Jaunas krāsas izmantotas projektā */
+    --purple: 88 28 135;
+    --purple-dark: 168 85 247;
+    --gray-light: 243 244 246;
+    --gray-dark: 31 41 55;
+  }
+
+  @variant dark {
+    --background: 10 10 32;
+    --text: 237 237 237;
+    --text-heading: 237 237 237; /* text-gray-200 */
+    --text-paragraph: 209 213 219; /* text-gray-300 */
+    --card: 28 28 60;
+    --primary: 139 92 246;
+    --secondary: 245 158 11;
+    --accent: 42 42 90;
+    --success: 22 163 74;
+    --warning: 234 179 8;
+    --danger: 220 38 38;
+    --input-bg: 30 32 60; /* tumšā režīma input fons */
+    --input-text: 203 213 225; /* #CBD5E1 - text-slate-300 */
+    --input-border: 64 64 86; /* robežkrāsa tumšajā */
+
+    /* Jaunu krāsu dark versijas */
+    --purple: var(--purple-dark);
+    --gray-light: var(--gray-dark);
+  }
 }
 
-/* Noklusētās tēmas krāsas */
+/* === Tailwind utilītas ar CSS variables === */
+@layer utilities {
+  .bg-background {
+    background-color: rgb(var(--background));
+  }
+  .text-text {
+    color: rgb(var(--text));
+  }
+  .text-heading {
+    color: rgb(var(--text-heading));
+  }
+  .text-paragraph {
+    color: rgb(var(--text-paragraph));
+  }
+  .bg-card {
+    background-color: rgb(var(--card));
+  }
+  .bg-primary {
+    background-color: rgb(var(--primary));
+  }
+  .text-primary {
+    color: rgb(var(--primary));
+  }
+  .bg-secondary {
+    background-color: rgb(var(--secondary));
+  }
+  .bg-accent {
+    background-color: rgb(var(--accent));
+  }
+  .bg-success {
+    background-color: rgb(var(--success));
+  }
+  .bg-warning {
+    background-color: rgb(var(--warning));
+  }
+  .bg-danger {
+    background-color: rgb(var(--danger));
+  }
+  .bg-purple {
+    background-color: rgb(var(--purple));
+  }
+  .text-purple {
+    color: rgb(var(--purple));
+  }
+  .bg-gray-light {
+    background-color: rgb(var(--gray-light));
+  }
+  .text-gray-light {
+    color: rgb(var(--gray-light));
+  }
+  .btn-gradient {
+    @apply px-6 py-3 text-lg font-semibold rounded-lg shadow-lg text-white cursor-pointer transition;
+    background-image: linear-gradient(
+      to right,
+      theme(colors.purple.600),
+      theme(colors.indigo.500)
+    );
+  }
+
+  .btn-gradient:hover {
+    opacity: 0.8;
+  }
+
+  .input {
+    background-color: rgb(var(--input-bg));
+    color: rgb(var(--input-text));
+    border: 1px solid rgb(var(--input-border));
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    width: 100%;
+    transition: all 0.3s ease;
+  }
+
+  .input::placeholder {
+    color: rgb(var(--input-text) / 0.5);
+  }
+
+  .input:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(var(--primary), 0.3);
+    border-color: rgb(var(--primary));
+  }
+
+  .text-accent-purple {
+    color: rgb(var(--purple));
+  }
+
+  .dark .text-accent-purple {
+    color: rgb(var(--purple-dark));
+  }
+}
+
+/* === Pamata fonti un struktūra === */
 html {
   font-family: var(--font-geist-sans);
-  background-color: var(--background-dark);
-  color: var(--foreground-dark);
   transition: all 0.3s ease;
 }
 
-/* Gaišā tēma */
-html.light {
-  background-color: var(--background-light);
-  color: var(--foreground-light);
-}
-
-/* Tumšā tēma */
-html.dark {
-  background-color: var(--background-dark);
-  color: var(--foreground-dark);
-}
-
-/* Vispārējie stili */
 body {
   margin: 0;
   padding: 0;
@@ -36,4 +157,14 @@ body {
   width: 100%;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  background-color: rgb(var(--background));
+  color: rgb(var(--text));
+}
+
+/* === Fona gradients === */
+.bg-page-gradient {
+  @apply bg-gradient-to-br from-gray-100 via-gray-200 to-gray-100;
+}
+.dark .bg-page-gradient {
+  @apply bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950;
 }

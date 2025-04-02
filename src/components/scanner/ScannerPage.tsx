@@ -7,6 +7,8 @@ import Image from "next/image";
 import { ScannerResultsProps } from "@/types/apiTypes/globalApiTypes";
 import { searchSuggestionProps } from "@/types/apiTypes/globalApiTypes";
 import LoadingCardSkeleton from "../loadings/LoadingCardSceleton";
+import Button from "../ui/Button";
+import Input from "../ui/Input";
 
 export default function ScannerPage() {
   const [contractInput, setContractInput] = useState("");
@@ -108,16 +110,19 @@ export default function ScannerPage() {
   };
 
   return (
-    <div className="flex flex-col items-center w-full py-12">
-      <h1 className="text-2xl md:text-3xl font-bold mb-4 text-white">
-        Scan NFT for Free
+    <div className="flex flex-col items-center w-full py-12 px-2">
+      <h1 className="text-2xl md:text-3xl font-bold text-heading">
+        Scan NFT for Free (beta)
       </h1>
+      <p className="text-paragraph text-sm mb-4">
+        *Limited to 5 scans per month on free plan
+      </p>
 
       <div
         ref={wrapperRef}
-        className="relative z-10 flex flex-col md:flex-row gap-2 items-center bg-gray-800 p-2 rounded-lg w-full max-w-lg md:max-w-2xl"
+        className="relative z-10 flex flex-col md:flex-row gap-2 items-center bg-card p-2 rounded-lg w-full max-w-lg md:max-w-2xl drop-shadow-lg"
       >
-        <input
+        <Input
           type="text"
           placeholder="Enter NFT contract address or colection name"
           value={contractInput}
@@ -126,47 +131,20 @@ export default function ScannerPage() {
             setContractInput(value);
             setQuery(value);
           }}
-          className="flex-grow w-full md:w-3/4 px-4 py-3 bg-gray-900 text-white rounded-lg outline-none border border-gray-700 focus:border-purple-500 transition relative z-10"
         />
-        <button
-          onClick={handleScan}
+
+        <Button
+          label="Scan"
+          loadingLabel="Scanning"
+          isLoading={isLoading}
           disabled={isLoading}
-          className={`bg-purple-500 hover:bg-purple-600 w-full md:w-1/4 px-6 py-3 rounded-lg text-white font-semibold transition whitespace-nowrap relative z-10 ${
-            isLoading ? "cursor-not-allowed opacity-50" : "cursor-pointer"
-          }`}
-        >
-          {isLoading ? (
-            <span className="flex items-center justify-center gap-2">
-              Scanning
-              <svg
-                className="animate-spin h-5 w-5 text-white"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
-              </svg>
-            </span>
-          ) : (
-            "Scan"
-          )}
-        </button>
+          onClick={handleScan}
+          className="w-full md:w-1/4"
+        />
 
         {suggestions.length > 0 && contractInput !== "" && (
           <div
-            className="absolute top-full mt-1 w-full bg-[#1e293b] border border-gray-700 rounded-lg shadow-xl z-20
+            className="absolute top-full mt-1 w-full bg-card border border-gray-300 rounded-lg drop-shadow-xl z-20
              scrollbar-thin scrollbar-thumb-purple-600 scrollbar-track-gray-800 max-h-[500px] overflow-auto"
           >
             {suggestions.map((collection) => (
@@ -177,7 +155,7 @@ export default function ScannerPage() {
                   setQuery("");
                   setSuggestions([]);
                 }}
-                className="flex items-center p-3 hover:bg-[#334155] cursor-pointer gap-3"
+                className="flex items-center p-3 hover:bg-gray-200 dark:hover:bg-[#334155] cursor-pointer gap-3"
               >
                 <Image
                   src={collection.image || "N/A"}
@@ -187,9 +165,9 @@ export default function ScannerPage() {
                   className="rounded-md"
                   unoptimized
                 />
-                <div className="text-sm text-white">
+                <div className="text-sm text-paragraph">
                   <p className="font-medium">{collection.name}</p>
-                  <p className="text-xs text-gray-400">{collection.symbol}</p>
+                  <p className="text-xs text-paragraph">{collection.symbol}</p>
                 </div>
               </div>
             ))}
@@ -206,7 +184,7 @@ export default function ScannerPage() {
         </p>
       )}
 
-      {isLoading ? (
+      {isLoading && !messageType ? (
         <LoadingCardSkeleton />
       ) : (
         result &&

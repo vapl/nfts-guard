@@ -1,4 +1,4 @@
-import { supabase } from "../supabase";
+import { supabase } from "../supabase/supabase";
 
 async function testSupabase() {
   const { data, error } = await supabase

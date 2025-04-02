@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import Logo from "@/components/logo/Logo";
 import SocialIcons from "@/components/SocialIcons";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase/supabase";
 import NetworkEffect from "@/components/NetworkEffect";
 import Link from "next/link";
 

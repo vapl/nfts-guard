@@ -2,7 +2,7 @@ import "@/app/globals.css";
 import { Michroma, Geist, Geist_Mono } from "next/font/google";
 import { defaultMetadata } from "@/app/metadata";
 import { ScanProvider } from "@/context/ScanContext";
-import ThemeProvider from "@/components/ClientProvider";
+import { ThemeProvider } from "next-themes";
 
 import { LayoutProps } from "@/types/layout";
 import Script from "next/script";
@@ -35,7 +35,8 @@ export default async function RootLayout({ children, params }: LayoutProps) {
   return (
     <html
       lang={locale}
-      className={`dark ${geistSans.variable} ${geistMono.variable} ${michroma.variable}`}
+      suppressHydrationWarning
+      className={`${geistSans.variable} ${geistMono.variable} ${michroma.variable}`}
     >
       <head>
         {/* Google Analytics tag */}
@@ -57,8 +58,8 @@ export default async function RootLayout({ children, params }: LayoutProps) {
         />
       </head>
 
-      <body className="antialiased bg-background text-text transition-colors duration-300">
-        <ThemeProvider>
+      <body>
+        <ThemeProvider attribute="class" enableSystem defaultTheme="system">
           <ScanProvider>
             {children}
             <AnalyticsTracker />

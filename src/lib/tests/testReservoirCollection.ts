@@ -1,10 +1,10 @@
-import { getCollectionData } from "@/lib/getReservoirCollections";
+import { getCollectionData } from "@/lib/reservoir/getReservoirCollections";
 
 async function test() {
-  const contractAddress = "0xed5af388653567af2f388e6224dc7c4b3241c544"; // CryptoPunks piemērs
+  const contractAddress = "0x1B41d54B3F8de13d58102c50D7431Fd6Aa1a2c48"; // CryptoPunks piemērs
   console.log(`🔎 Iegūstam NFT kolekcijas (${contractAddress}) datus...`);
 
-  const data = await getCollectionData(contractAddress);
+  const data = await getCollectionData(contractAddress, true); // ← force refresh!
 
   console.log("📌 Kolekcijas dati:", data);
 }

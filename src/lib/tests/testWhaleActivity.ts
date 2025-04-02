@@ -1,6 +1,6 @@
 import { getNFTWhaleActivity } from "@/lib/analysis/analysisWhaleActivity";
 
-const contractAddress = "0xed5af388653567af2f388e6224dc7c4b3241c544";
+const contractAddress = "0xbd3531da5cf5857e7cfaa92426877b022e612cf8";
 const timePeriod = 30; // Dienu skaits, ko analizēt
 
 getNFTWhaleActivity(contractAddress, timePeriod)

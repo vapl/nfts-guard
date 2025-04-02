@@ -14,12 +14,8 @@ import { WhaleStatsDashboard } from "./WhaleStatsCard";
 import { HolderDistribution } from "@/types/apiTypes/holderDistribution";
 import { HolderDistributionChart } from "../charts/HolderDistributionChart";
 import { FaRegCopy, FaCheck } from "react-icons/fa";
-
-const COLORS = {
-  secure: "#8b5cf6",
-  caution: "#f59e0b",
-  dangerous: "#f43f5e",
-};
+import SafetyScore from "../charts/SafetyScore";
+import { ShareOnXButton } from "../ShareOnXButton";
 
 export function ScannerResults({
   contractAddress,
@@ -57,9 +53,9 @@ export function ScannerResults({
   };
 
   const floorPriceData = [
-    { time: "30d", price: Number(collectionData.floor_price_change_30d) },
-    { time: "7d", price: Number(collectionData.floor_price_change_7d) },
-    { time: "24h", price: Number(collectionData.floor_price_change_24h) },
+    { time: "30d", price: Number(collectionData.floor_price_change_30d ?? 0) },
+    { time: "7d", price: Number(collectionData.floor_price_change_7d ?? 0) },
+    { time: "24h", price: Number(collectionData.floor_price_change_24h ?? 0) },
   ];
 
   const liquidityRatio =
@@ -68,21 +64,27 @@ export function ScannerResults({
   const cards = [
     {
       title: "Rug Pull Risk",
-      value: `Risk level: ${rugPullAnalysis?.risk_level ?? "N/A"}`,
+      value: `${rugPullAnalysis?.risk_level ?? "N/A"}`,
       details: [
-        `Whale Drop: ${Number(rugPullAnalysis?.whale_drop_percent ?? 0).toFixed(
-          2
-        )}%`,
-        rugPullAnalysis?.seller_to_buyer_ratio
-          ? `Seller/Buyer Ratio: ${rugPullAnalysis?.seller_to_buyer_ratio}`
-          : undefined,
-        rugPullAnalysis?.unique_sellers
-          ? `Unique Sellers: ${rugPullAnalysis?.unique_sellers}`
-          : undefined,
-        rugPullAnalysis?.unique_buyers
-          ? `Unique Buyers: ${rugPullAnalysis?.unique_buyers}`
-          : undefined,
-      ].filter((d): d is string => typeof d === "string"),
+        {
+          label: "Whale Drop",
+          value: `${Number(rugPullAnalysis?.whale_drop_percent ?? 0).toFixed(
+            2
+          )}%`,
+        },
+        {
+          label: "Seller/Buyer Ratio",
+          value: rugPullAnalysis?.seller_to_buyer_ratio ?? "N/A",
+        },
+        {
+          label: "Unique Sellers",
+          value: rugPullAnalysis?.unique_sellers ?? "N/A",
+        },
+        {
+          label: "Unique Buyers",
+          value: rugPullAnalysis?.unique_buyers ?? "N/A",
+        },
+      ],
       icon:
         rugPullAnalysis?.risk_level === "Low" ? (
           <ShieldCheck />
@@ -105,13 +107,21 @@ export function ScannerResults({
           : 3,
       volume: 0,
       activity: 0,
+      tooltipInfo:
+        "Indicates the risk of the collection experiencing a rug pull, assessed by analyzing the percentage of whales dumping NFTs, seller-to-buyer ratio, and activity from unique sellers and buyers.",
     },
     {
       title: "Wash Trading Index",
       value: `${(washTradingAnalysis?.washTradingIndex ?? 0).toFixed(1)}%`,
       details: [
-        `Suspicious Sales: ${washTradingAnalysis?.suspiciousSalesCount ?? 0}`,
-        `Top Wallets: ${washTradingAnalysis?.topWallets?.length ?? 0}`,
+        {
+          label: "Suspicious Sales",
+          value: washTradingAnalysis?.suspiciousSalesCount ?? 0,
+        },
+        {
+          label: "Top Wallets",
+          value: washTradingAnalysis?.topWallets?.length ?? 0,
+        },
       ],
       icon:
         washTradingAnalysis?.washTradingIndex > 50 ? (
@@ -130,48 +140,127 @@ export function ScannerResults({
       riskScore: washTradingAnalysis?.washTradingIndex < 1 ? 1 : 2,
       volume: 0,
       activity: 0,
+      tooltipInfo:
+        "Represents the proportion of suspicious trades that could be wash trading, highlighting artificial inflation of sales. Includes the count of suspicious sales and top wallets involved.",
     },
     {
       title: "Volume & Sales",
-      value: `${Number(collectionData.volume_all).toFixed(2)} total`,
+      value: `${Number(collectionData.volume_all ?? 0).toFixed(2)} Ξ total`,
       details: [
-        `7d Volume: ${Number(collectionData.volume_7day).toFixed(2)}`,
-        `Sales Count: ${collectionData.sales_count}`,
+        {
+          label: "24h Volume",
+          value: `${Number(collectionData.volume_1day ?? 0).toFixed(2)} Ξ`,
+        },
+        {
+          label: "7d Volume",
+          value: `${Number(collectionData.volume_7day ?? 0).toFixed(2)} Ξ`,
+        },
+        {
+          label: "30d Volume",
+          value: `${Number(collectionData.volume_30day ?? 0).toFixed(2)} Ξ`,
+        },
+        {
+          label: "Sales Count",
+          value: collectionData.sales_count ?? 0,
+        },
       ],
       riskScore: 0,
       volume: collectionData.volume_all,
       activity: 0,
+      tooltipInfo:
+        "Summarizes the total volume traded and sales count, including recent volume metrics (24h, 7 days, 30 days). Useful for assessing market activity.",
     },
     {
       title: "Liquidity Score",
       value: `${(liquidityRatio * 100).toFixed(1)}% Listed`,
       details: [
-        `On Sale: ${collectionData.on_sale_count}`,
-        `Total Supply: ${collectionData.total_supply}`,
+        {
+          label: "On Sale",
+          value: collectionData.on_sale_count ?? 0,
+        },
+        {
+          label: "Total Supply",
+          value: collectionData.total_supply ?? 0,
+        },
       ],
       icon: <Droplet />,
       variant:
-        liquidityRatio < 0.05
+        liquidityRatio < 0.1
           ? "Secure"
-          : liquidityRatio < 0.15
+          : liquidityRatio < 0.3
           ? "Caution"
           : "Dangerous",
-      riskScore: liquidityRatio < 0.05 ? 1 : liquidityRatio < 0.15 ? 2 : 3,
+      riskScore: liquidityRatio < 0.1 ? 1 : liquidityRatio < 0.3 ? 2 : 3,
       volume: 0,
       activity: 0,
+      tooltipInfo:
+        "Indicates how many NFTs are currently listed for sale out of the total supply. Higher listing = more selling pressure. Lower listing = stronger holder confidence and better long-term potential.",
     },
     {
       title: "Floor Price Change",
-      value: `Current: ${Number(collectionData.floor_price).toFixed(3)}`,
+      value: `Current: ${Number(collectionData.floor_price ?? 0).toFixed(3)} Ξ`,
       details: [
-        `24h: ${Number(collectionData.floor_price_change_24h).toFixed(3)}`,
-        `7d: ${Number(collectionData.floor_price_change_7d).toFixed(3)}`,
-        `30d: ${Number(collectionData.floor_price_change_30d).toFixed(3)}`,
+        {
+          label: "24h",
+          value: `${Number(collectionData.floor_price_change_24h ?? 0).toFixed(
+            3
+          )} Ξ`,
+        },
+        {
+          label: "7d",
+          value: `${Number(collectionData.floor_price_change_7d ?? 0).toFixed(
+            3
+          )} Ξ`,
+        },
+        {
+          label: "30d",
+          value: `${Number(collectionData.floor_price_change_30d ?? 0).toFixed(
+            3
+          )} Ξ`,
+        },
       ],
       riskScore: 0,
       volume: 0,
       activity: 0,
+      tooltipInfo:
+        "Tracks recent fluctuations in the collection's lowest available price (floor price) over 24 hours, 7 days, and 30 days. Helpful in understanding short-term price trends.",
       chart: <MiniFloorPriceChart data={floorPriceData} />,
+    },
+    {
+      title: "Volatility Score",
+      value: `Index: ${collectionData.volatility_index?.toFixed(2) ?? "N/A"}`,
+      details: [
+        {
+          label: "Risk Level",
+          value: collectionData.volatility_risk_level ?? "N/A",
+        },
+      ],
+      icon:
+        collectionData.volatility_risk_level === "Low" ? (
+          <ShieldCheck />
+        ) : collectionData.volatility_risk_level === "Medium" ? (
+          <ShieldQuestion />
+        ) : (
+          <AlertTriangle />
+        ),
+      variant: !collectionData.volatility_risk_level
+        ? "No data"
+        : collectionData.volatility_risk_level === "Low"
+        ? "Secure"
+        : collectionData.volatility_risk_level === "Medium"
+        ? "Caution"
+        : "Dangerous",
+
+      riskScore:
+        collectionData.volatility_risk_level === "Low"
+          ? 1
+          : collectionData.volatility_risk_level === "Medium"
+          ? 2
+          : 3,
+      volume: 0,
+      activity: 0,
+      tooltipInfo:
+        "Volatility measures how much the floor price fluctuates over time. Higher volatility may indicate market instability or speculative activity.",
     },
   ];
 
@@ -185,24 +274,30 @@ export function ScannerResults({
 
   return (
     <div className="w-full py-8 lg:px-16 xl:px-24 mt-10">
-      <div className="col-span-full bg-gradient-to-r from-[#1c1c3c] to-[#2a2a5a] rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-lg">
-        {collectionData.image_url && (
-          <div className="relative w-32 h-32 rounded-xl overflow-hidden">
-            <Image
-              src={collectionData.image_url}
-              alt={collectionData.name || "N/A"}
-              fill
-              priority={true}
-              className="object-cover"
-            />
+      <div className="col-span-full bg-card rounded-xl p-6 relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 drop-shadow-lg">
+        <div className="flex w-full sm:w-auto items-center justify-between">
+          {collectionData.image_url && (
+            <div className="relative w-32 h-32 rounded-xl overflow-hidden">
+              <Image
+                src={collectionData.image_url}
+                alt={collectionData.name || "N/A"}
+                fill
+                priority={true}
+                className="object-cover"
+              />
+            </div>
+          )}
+          <div className="flex sm:hidden flex-col justify-center items-center">
+            <SafetyScore score={derivedSafetyScore} riskLevel={riskLevel} />
           </div>
-        )}
-
+        </div>
         <div className="flex-1 flex-col">
-          <div className="flex-1 flex gap-3 text-white">
-            <h2 className="text-2xl font-bold mb-2">{collectionData.name}</h2>
+          <div className="flex-1 flex gap-3">
+            <h2 className="text-2xl font-bold mb-2 text-heading">
+              {collectionData.name}
+            </h2>
             <span
-              className="text-md text-gray-300 font-mono opacity-70 flex items-center gap-1 cursor-pointer"
+              className="text-md text-paragraph font-mono opacity-70 flex items-center gap-1 cursor-pointer"
               onClick={copyToClipboard}
             >
               {shortenAddress(contractAddress)}
@@ -210,82 +305,41 @@ export function ScannerResults({
             </span>
           </div>
           <ul className="grid grid-cols-3 gap-2 text-sm opacity-80">
-            <li className="bg-[#1c1c3c] shadow-md p-2 rounded-lg">
+            <li className="bg-card drop-shadow-lg p-2 rounded-lg border border-gray-300 dark:border-gray-700">
               Floor:{" "}
-              <span className="text-purple-400 font-semibold">
-                {Number(collectionData.floor_price).toFixed(3)}
+              <span className="font-semibold">
+                {Number(collectionData.floor_price).toFixed(3)} Ξ
               </span>
             </li>
-            <li className="bg-[#1c1c3c] shadow-md p-2 rounded-lg">
-              Top Bid: {collectionData.top_bid}
+            <li className="bg-card drop-shadow-lg p-2 rounded-lg border border-gray-300 dark:border-gray-700">
+              Top Bid:{" "}
+              <span className="font-semibold">
+                {collectionData.top_bid?.toFixed(3)} Ξ
+              </span>
             </li>
-            <li className="bg-[#1c1c3c] shadow-md p-2 rounded-lg">
-              Owners: {collectionData.owner_count}
+            <li className="bg-card drop-shadow-lg p-2 rounded-lg border border-gray-300 dark:border-gray-700">
+              Owners:{" "}
+              <span className="font-semibold">
+                {collectionData.owner_count}
+              </span>
             </li>
-            <li className="bg-[#1c1c3c] shadow-md p-2 rounded-lg">
-              Supply: {collectionData.total_supply}
+            <li className="bg-card drop-shadow-lg p-2 rounded-lg border border-gray-300 dark:border-gray-700">
+              Supply:{" "}
+              <span className="font-semibold">
+                {collectionData.total_supply}
+              </span>
             </li>
-            <li className="bg-[#1c1c3c] shadow-md p-2 rounded-lg">
-              On Sale: {collectionData.on_sale_count}
+            <li className="bg-card drop-shadow-lg p-2 rounded-lg border border-gray-300 dark:border-gray-700">
+              On Sale:{" "}
+              <span className="font-semibold">
+                {collectionData.on_sale_count}
+              </span>
             </li>
           </ul>
         </div>
 
-        <div className="flex flex-col justify-center items-center">
-          <p className="text-white text-lg font-semibold mb-2">Safety Score</p>
-          <div className="relative w-20 h-20">
-            <svg className="w-full h-full" viewBox="0 0 36 36">
-              <path
-                className="text-gray-700"
-                fill="none"
-                strokeWidth="4"
-                stroke="currentColor"
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-              />
-              <path
-                style={{
-                  color:
-                    riskLevel === "Low"
-                      ? COLORS.secure
-                      : riskLevel === "Medium"
-                      ? COLORS.caution
-                      : COLORS.dangerous,
-                }}
-                fill="none"
-                strokeWidth="4"
-                strokeDasharray={`${(derivedSafetyScore / 100) * 100}, 100`}
-                strokeLinecap="round"
-                stroke="currentColor"
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-              />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center text-white text-lg font-bold">
-              {derivedSafetyScore}
-            </div>
-          </div>
-          <span
-            style={{
-              backgroundColor:
-                riskLevel === "Low"
-                  ? COLORS.secure
-                  : riskLevel === "Medium"
-                  ? COLORS.caution
-                  : COLORS.dangerous,
-            }}
-            className={`inline-block mt-3 text-xs px-4 py-1 rounded-full ${
-              riskLevel === "Low"
-                ? "text-green-100"
-                : riskLevel === "Medium"
-                ? "text-yellow-100"
-                : "text-red-100"
-            }`}
-          >
-            {riskLevel === "Low"
-              ? "Secure"
-              : riskLevel === "Medium"
-              ? "Coution"
-              : "Dangerous"}
-          </span>
+        <div className="hidden sm:flex flex-col justify-center items-center">
+          <SafetyScore score={derivedSafetyScore} riskLevel={riskLevel} />
         </div>
       </div>
 
@@ -299,18 +353,33 @@ export function ScannerResults({
             icon={card.icon}
             variant={card.variant}
             chart={card.chart}
+            tooltipInfo={card.tooltipInfo}
           />
         ))}
+        {holderDistribution && (
+          <HolderDistributionChart
+            data={holderDistribution}
+            totalHolders={collectionData.owner_count || 0}
+            contractAddress={contractAddress}
+          />
+        )}
       </div>
-
-      {holderDistribution && (
-        <HolderDistributionChart data={holderDistribution} />
-      )}
 
       {/* Whale Stats Card */}
       {whaleActivityAnalysis && (
         <WhaleStatsDashboard stats={whaleActivityAnalysis.whaleStats} />
       )}
+
+      <ShareOnXButton
+        collectionName={collectionData.name || "N/A"}
+        safetyScore={derivedSafetyScore}
+        riskLevel={riskLevel}
+        washTrading={Number(
+          washTradingAnalysis?.washTradingIndex.toFixed(2) ?? 0
+        )}
+        rugPullRisk={rugPullAnalysis?.risk_level ?? "N/A"}
+        appUrl="https://nftsguard.com"
+      />
     </div>
   );
 }

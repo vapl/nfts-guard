@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { CheckCircle, XCircle } from "lucide-react";
 import AuthModal from "@/components/modals/AuthModal";
+import ScrollToTop from "@/components/ui/ScrollToTop";
 
 const PricingPage: React.FC = () => {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">(
@@ -20,6 +21,7 @@ const PricingPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-purple-900 to-gray-900 text-white">
+      <ScrollToTop />
       <div className="container max-w-7xl mx-auto px-6 pt-32 pb-16">
         <h1 className="text-5xl md:text-6xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 mb-6">
           Choose Your Plan

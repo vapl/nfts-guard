@@ -11,10 +11,11 @@ export default function PromoLandingLayout({
   return (
     <>
       <NetworkEffect />
-      <div className="flex flex-col w-full">
-        <main className="flex-1 overflow-auto p-6 w-full max-w-[1920px] mx-auto">
-          {children}
-        </main>
+      <div
+        className="flex flex-col w-full justify-center max-w-screen bg-page-gradient
+             transition-colors duration-300"
+      >
+        <main className="p-3 w-full max-w-[1920px] mx-auto">{children}</main>
       </div>
     </>
   );

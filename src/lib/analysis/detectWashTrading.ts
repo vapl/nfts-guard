@@ -1,6 +1,6 @@
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase/supabase";
 import { NFTTransactionProps } from "@/types/apiTypes/globalApiTypes";
-import { getNFTSales } from "@/lib/getReservoirSales";
+import { getNFTSales } from "@/lib/reservoir/getReservoirSales";
 
 /**
  * ✅ Detects wash trading with optimized logic and indexed access

@@ -2,25 +2,19 @@ import {
   PieChart,
   Pie,
   Cell,
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
   LineChart,
   Line,
   CartesianGrid,
 } from "recharts";
 import "react-calendar-heatmap/dist/styles.css";
 import { WhaleStats } from "@/types/apiTypes/globalApiTypes";
-import { DollarSign, User } from "lucide-react";
 import { useMemo } from "react";
+import TooltipInfo from "../tooltips/TooltipInfo";
+// import TopWhaleRadar from "../charts/TopWhaleRadar";
 
 interface WhaleStatsDashboardProps {
   stats: WhaleStats;
@@ -38,38 +32,6 @@ export const WhaleStatsDashboard: React.FC<WhaleStatsDashboardProps> = ({
     })
   );
 
-  const topWhaleData = stats.topWhale
-    ? [
-        {
-          name: "ETH Spent",
-          value: parseFloat(stats.topWhale.total_eth_spent.toFixed(2)),
-        },
-        {
-          name: "Total Activity",
-          value: stats.topWhale.total_activity,
-        },
-      ]
-    : [];
-
-  const radarData = [
-    {
-      metric: "ETH Spent",
-      value: stats.topWhale?.total_eth_spent ?? 0,
-    },
-    {
-      metric: "Activity",
-      value: stats.topWhale?.total_activity ?? 0,
-    },
-    {
-      metric: "Hold Time",
-      value: stats.avgHoldTime ?? 0,
-    },
-    {
-      metric: "Volatility",
-      value: stats.avgVolatility ?? 0,
-    },
-  ];
-
   const timeSeriesData = useMemo(() => {
     if (!Array.isArray(stats.activityLog)) return [];
     return stats.activityLog.reduce((acc, tx) => {
@@ -85,121 +47,123 @@ export const WhaleStatsDashboard: React.FC<WhaleStatsDashboardProps> = ({
   }, [stats]);
 
   return (
-    <div className="bg-[#1c1c3c] text-white p-6 rounded-2xl mt-6 shadow-md">
-      <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-        <User size={20} /> Whale Statistics Overview
-      </h3>
+    <div className="bg-card p-6 rounded-2xl mt-6 drop-shadow-lg">
+      <div className="flex-1 flex gap-3">
+        <h4 className="text-paragraph text-sm mb-1">
+          Whale Statistics Overview
+        </h4>
 
-      <div className="grid grid-cols-2 gap-4 text-sm">
-        <div>
-          Total Whales:{" "}
-          <span className="text-purple-400 font-semibold">
+        <TooltipInfo content="This section provides a summary of trading activity by high-value NFT holders ('whales').It includes total buys, sells, transfers, ETH spent, average holding days, and portfolio volatility. Understanding whale behavior helps assess collection stability, accumulation patterns, and potential risks of price manipulation." />
+      </div>
+      <div className="text-2xl font-bold text-heading">
+        Total{" "}
+        {
+          <span className="text-accent-purple font-bold">
             {stats.totalWhales || "N/A"}
           </span>
-        </div>
-        <div>Total Buys: {stats.totalBuys || "N/A"}</div>
-        <div>Total Sells: {stats.totalSells || "N/A"}</div>
-        <div>Total Transfers: {stats.totalTransfers || "N/A"}</div>
-        <div>Total ETH Spent: {stats.totalEthSpent || "N/A"}</div>
-        <div>Avg. Hold Time: {stats.avgHoldTime || "N/A"} days</div>
-        <div>Avg. Volatility: {stats.avgVolatility || "N/A"}</div>
+        }{" "}
+        Whales
       </div>
 
-      {stats.topWhale && (
-        <div className="mt-4 border-t border-white/20 pt-4">
-          <h4 className="text-md font-semibold mb-2 flex items-center gap-2">
-            <DollarSign size={16} /> Top Whale
-          </h4>
-          <p>
-            Wallet:{" "}
-            <span className="text-purple-400 font-mono">
-              {stats.topWhale.wallet.slice(0, 6)}...
-            </span>
-          </p>
-          <p>Type: {stats.topWhale.whale_type}</p>
-          <p>ETH Spent: {stats.topWhale.total_eth_spent.toFixed(2)}</p>
-          <p>Total Activity: {stats.topWhale.total_activity}</p>
-        </div>
-      )}
+      <ul className="flex flex-wrap mt-4 text-paragraph gap-5">
+        <li className="flex flex-col justify-end">
+          <span className="text-xs">Total Buys</span>
+          <span className="text-md text-paragraph font-semibold">
+            {stats.totalBuys || "N/A"}
+          </span>
+        </li>
+        <li className="flex flex-col justify-end">
+          <span className="text-xs text-nowrap">Total Sells</span>
+          <span className="text-md text-paragraph font-semibold">
+            {stats.totalSells || "N/A"}
+          </span>
+        </li>
+        <li className="flex flex-col justify-end">
+          <span className="text-xs text-nowrap">Total Transfers:</span>
+          <span className="text-md text-paragraph font-semibold">
+            {stats.totalTransfers || "N/A"}
+          </span>
+        </li>
+        <li className="flex flex-col justify-end">
+          <span className="text-xs text-nowrap">Total ETH Spent:</span>
+          <span className="text-md text-paragraph font-semibold">
+            {stats.totalEthSpent.toFixed(3) || "N/A"}
+          </span>
+        </li>
+        <li className="flex flex-col justify-end">
+          <span className="text-xs text-nowrap">Avg. Hold Days:</span>
+          <span className="text-md text-paragraph font-semibold">
+            {stats.avgHoldTime || "N/A"}
+          </span>
+        </li>
+        <li className="flex flex-col justify-end">
+          <span className="text-xs text-nowrap">Avg. Volatility:</span>
+          <span className="text-md text-paragraph font-semibold">
+            {stats.avgVolatility.toFixed(3) || "N/A"}
+          </span>
+        </li>
+      </ul>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+      <div className="flex flex-col lg:flex-row gap-6 mt-6">
         {pieData.length > 0 && (
-          <div className="bg-gradient-to-br from-[#1e1e3f] to-[#12122c] p-6 rounded-2xl shadow hover:shadow-xl">
+          <div className="w-full lg:w-3/5 bg-card p-6 rounded-2xl border border-gray-400">
             <h4 className="text-sm font-semibold mb-4">
               Whale Type Distribution
             </h4>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  labelLine={false}
-                  label={({ name, percent }) =>
-                    `${name}: ${(percent * 100).toFixed(0)}%`
-                  }
-                >
-                  {pieData.map((_, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
+            <div className="flex flex-col sm:flex-row items-center justify-center">
+              <ResponsiveContainer width="80%" height={200}>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    labelLine={false}
+                    label={false}
+                  >
+                    {pieData.map((_, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                      />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="mt-4 space-y-1 text-sm">
+                {pieData.map((entry, index) => (
+                  <div key={entry.name} className="flex items-center gap-2">
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: COLORS[index % COLORS.length] }}
                     />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
+                    <span className="text-paragraph font-medium">
+                      {entry.name}:{" "}
+                      {((entry.value / (stats.totalWhales || 1)) * 100).toFixed(
+                        0
+                      )}
+                      %
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
-
-        {topWhaleData.length > 0 && (
-          <div className="bg-gradient-to-br from-[#1e1e3f] to-[#12122c] p-6 rounded-2xl shadow hover:shadow-xl">
-            <h4 className="text-sm font-semibold mb-4">Top Whale Stats</h4>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={topWhaleData} barSize={40}>
-                <XAxis dataKey="name" stroke="#ccc" />
-                <YAxis stroke="#ccc" />
-                <Tooltip />
-                <Bar dataKey="value" fill="#8b5cf6" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-
-        <div className="bg-gradient-to-br from-[#1e1e3f] to-[#12122c] p-6 rounded-2xl shadow hover:shadow-xl md:col-span-2">
-          <h4 className="text-sm font-semibold mb-4">
-            Top Whale Radar Profile
-          </h4>
-          <ResponsiveContainer width="100%" height={300}>
-            <RadarChart data={radarData} outerRadius={100}>
-              <PolarGrid stroke="#444" />
-              <PolarAngleAxis dataKey="metric" stroke="#ccc" />
-              <PolarRadiusAxis stroke="#ccc" />
-              <Radar
-                name="Metrics"
-                dataKey="value"
-                stroke="#22d3ee"
-                fill="#22d3ee"
-                fillOpacity={0.4}
-              />
-              <Tooltip />
-            </RadarChart>
-          </ResponsiveContainer>
-        </div>
 
         {timeSeriesData.length > 0 && (
-          <div className="bg-gradient-to-br from-[#1e1e3f] to-[#12122c] p-6 rounded-2xl shadow hover:shadow-xl md:col-span-2">
+          <div className="w-full lg:w-4/5 border border-gray-400  p-6 rounded-2xl">
             <h4 className="text-sm font-semibold mb-4">
               ETH Spending Over Time
             </h4>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={200}>
               <LineChart data={timeSeriesData}>
-                <CartesianGrid stroke="#333" />
-                <XAxis dataKey="date" stroke="#ccc" />
-                <YAxis stroke="#ccc" />
+                <CartesianGrid stroke="rgb(var(--text-paragraph))" />
+                <XAxis dataKey="date" stroke="rgb(var(--text-paragraph))" />
+                <YAxis stroke="rgb(var(--text-paragraph))" />
                 <Tooltip />
                 <Line
                   type="monotone"

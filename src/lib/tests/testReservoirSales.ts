@@ -1,4 +1,4 @@
-import { getNFTSales } from "@/lib/getReservoirSales";
+import { getNFTSales } from "@/lib/reservoir/getReservoirSales";
 
 async function test() {
   const contractAddress = "0xbd3531da5cf5857e7cfaa92426877b022e612cf8"; // Example collection

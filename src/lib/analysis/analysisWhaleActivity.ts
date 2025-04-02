@@ -1,18 +1,19 @@
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase/supabase";
 import {
   NFTWhaleActivityProps,
   WhaleStats,
   WhaleStatsTopWhale,
 } from "@/types/apiTypes/globalApiTypes";
-import { saveWhaleActivityToSupabase } from "@/lib/dataStorage/saveWhaleActivity";
-import { upsertWhaleStatsToSupabase } from "../dataStorage/upsertWhaleStatsToSupabase";
+import { saveWhaleActivityToSupabase } from "@/lib/supabase/dataStorage/saveWhaleActivity";
+import { upsertWhaleStatsToSupabase } from "../supabase/dataStorage/upsertWhaleStatsToSupabase";
 
 const PAGE_SIZE = 500;
 
 export function generateWhaleStats(
-  whaleData: NFTWhaleActivityProps[]
+  whaleData: NFTWhaleActivityProps[],
+  totalWhales: number
 ): WhaleStats {
-  const totalWhales = whaleData.length;
+  // const totalWhales = whaleData.length;
 
   let totalBuys = 0;
   let totalSells = 0;
@@ -107,7 +108,7 @@ export async function getNFTWhaleActivity(
       .from("nft_owners")
       .select("wallet")
       .eq("contract_address", contractAddress)
-      .eq("is_whale", true);
+      .gte("token_count", 11);
 
     if (ownersError) throw new Error("❌ Error fetching whale owners");
     if (!whaleOwners?.length)
@@ -278,7 +279,7 @@ export async function getNFTWhaleActivity(
       };
     });
 
-    const whaleStats = generateWhaleStats(allWhaleActivity);
+    const whaleStats = generateWhaleStats(allWhaleActivity, whaleOwners.length);
     whaleStats.activityLog = generateActivityLog(salesData || []);
 
     saveWhaleActivityToSupabase(allWhaleActivity);

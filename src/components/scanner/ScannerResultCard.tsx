@@ -1,11 +1,10 @@
 import { ScanResultCardProps } from "@/types/apiTypes/globalApiTypes";
 import Image from "next/image";
+import TooltipInfo from "../tooltips/TooltipInfo";
 
-const COLORS = {
-  secure: "#8b5cf6",
-  caution: "#f59e0b",
-  dangerous: "#f43f5e",
-};
+interface ExtendedScanResultCardProps extends ScanResultCardProps {
+  tooltipInfo?: string;
+}
 
 export function ScanResultCard({
   title,
@@ -16,37 +15,41 @@ export function ScanResultCard({
   icon,
   variant,
   chart,
-}: ScanResultCardProps) {
+  tooltipInfo,
+}: ExtendedScanResultCardProps) {
   return (
     <>
       <div
-        className={`bg-[#1c1c3c] rounded-xl p-6 shadow-md border
+        className={`bg-card rounded-xl p-6 drop-shadow-lg border
     ]`}
         style={{
           borderColor:
             variant === "Dangerous"
-              ? COLORS.dangerous
+              ? "rgb(var(--danger))"
               : variant === "Coution"
-              ? COLORS.caution
-              : COLORS.secure,
+              ? "rgb(var(--warning))"
+              : "transparent",
         }}
       >
         <div className="flex justify-between w-full">
           <div className="flex-1">
-            <h4 className="text-gray-400 text-sm mb-1">{title}</h4>
-            <div className="text-2xl font-bold text-white">{value}</div>
+            <div className="flex-1 flex gap-3">
+              <h4 className="text-paragraph text-sm mb-1">{title}</h4>
+              <TooltipInfo content={tooltipInfo} />
+            </div>
+            <div className="text-2xl font-bold text-heading">{value}</div>
           </div>
           <div className="flex flex-col justify-center items-center">
             {icon && (
               <div
-                className="mb-2 text-purple-400 h-6"
+                className="mb-2 text-accent-purple h-6"
                 style={{
                   color:
                     variant === "Dangerous"
-                      ? COLORS.dangerous
+                      ? "rgb(var(--danger))"
                       : variant === "Caution"
-                      ? COLORS.caution
-                      : COLORS.secure,
+                      ? "rgb(var(--warning))"
+                      : "rgb(var(--success))",
                 }}
               >
                 {icon}
@@ -58,10 +61,10 @@ export function ScanResultCard({
                 style={{
                   color:
                     variant === "Dangerous"
-                      ? COLORS.dangerous
+                      ? "rgb(var(--danger))"
                       : variant === "Caution"
-                      ? COLORS.caution
-                      : COLORS.secure,
+                      ? "rgb(var(--warning))"
+                      : "rgb(var(--success))",
                 }}
               >
                 {variant}
@@ -92,9 +95,14 @@ export function ScanResultCard({
           />
         )}
         {details && (
-          <ul className="flex mt-4 text-sm text-gray-400 gap-3">
+          <ul className="flex mt-4 text-paragraph gap-5">
             {details.map((d, idx) => (
-              <li key={idx}> {d}</li>
+              <li key={idx} className="flex flex-col">
+                <span className="text-xs">{d.label}</span>
+                <span className="text-md text-paragraph font-semibold">
+                  {d.value}
+                </span>
+              </li>
             ))}
           </ul>
         )}

@@ -1,8 +1,8 @@
 import { detectWashTrading } from "@/lib/analysis/detectWashTrading";
-import { getCollectionData } from "@/lib/getReservoirCollections";
-import { getNFTSales } from "@/lib/getReservoirSales";
-import { getNFTTransfers } from "@/lib/getReservoirTransfers";
-import { getNFTCollectionOwners } from "@/lib/getReservoirCollectionOwners";
+import { getCollectionData } from "@/lib/reservoir/getReservoirCollections";
+import { getNFTSales } from "@/lib/reservoir/getReservoirSales";
+import { getNFTTransfers } from "@/lib/reservoir/getReservoirTransfers";
+import { getNFTCollectionOwners } from "@/lib/reservoir/getReservoirOwners";
 import { detectRugPull } from "@/lib//analysis/detectRugPull";
 import { getNFTWhaleActivity } from "@/lib/analysis/analysisWhaleActivity";
 import { calculateSafetyScore } from "./analysis/calculateSafetyScore";
@@ -42,10 +42,7 @@ export async function fetchAndAnalyzeNFTData(
     console.log(`✅ Transfer Data Fetched (${transferData.length} records)`);
 
     // ✅ 4️⃣ Iegūst kolekcijas īpašniekus un saglabā DB
-    const ownersData = await getNFTCollectionOwners(
-      contractAddress,
-      timePeriod
-    );
+    const ownersData = await getNFTCollectionOwners(contractAddress);
     console.log(`✅ Owners Data Fetched (${ownersData.length} records)`);
 
     // ✅ 5️⃣ Izsauc Wash Trading analīzi pēc tam, kad pārdošanas dati ir ielādēti
@@ -70,6 +67,10 @@ export async function fetchAndAnalyzeNFTData(
       rugPullRiskLevel: rugPullAnalysis.risk_level as "Low" | "Medium" | "High",
       washTradingIndex: washTradingAnalysis.washTradingIndex ?? 0,
       whaleDumpPercent: Number(rugPullAnalysis.whale_drop_percent ?? 0),
+      liquidityRatio:
+        collectionData.on_sale_count / collectionData.total_supply,
+      floorDropPercent: collectionData.floor_price_change_7d,
+      volatilityRiskLevel: collectionData.volatility_risk_level, // 👈 svarīgi!
     });
 
     const riskLevel =

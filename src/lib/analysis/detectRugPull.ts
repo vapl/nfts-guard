@@ -1,5 +1,7 @@
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase/supabase";
 import { NFTCollectionOwnerProps } from "@/types/apiTypes/globalApiTypes";
+import { getDateDaysAgo } from "@/utils/dateUtils";
+import { RISK_RULES } from "../config/riskRulesConfig";
 
 /**
  * ✅ Fetches NFT ownership data for rug pull analysis (only whales included)
@@ -8,15 +10,14 @@ async function getWhaleOwners(
   contractAddress: string,
   days: number
 ): Promise<NFTCollectionOwnerProps[]> {
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - days);
+  const startDate = getDateDaysAgo(days);
 
   const { data, error } = await supabase
     .from("nft_owners")
     .select("wallet, token_count, ownership_percentage, is_whale")
     .eq("contract_address", contractAddress)
     .eq("is_whale", true)
-    .gte("last_updated", startDate.toISOString());
+    .gte("last_updated", startDate);
 
   if (error) {
     console.error("❌ Error fetching NFT whale owners:", error);
@@ -59,14 +60,13 @@ async function getFloorPrice(contractAddress: string): Promise<{
  * ✅ Fetches NFT transfers for wallet movement analysis
  */
 async function getNFTTransfers(contractAddress: string, days: number) {
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - days);
+  const startDate = getDateDaysAgo(days);
 
   const { data, error } = await supabase
     .from("nft_transfers")
     .select("from_wallet, to_wallet, amount, timestamp")
     .eq("contract_address", contractAddress)
-    .gte("timestamp", startDate.toISOString());
+    .gte("timestamp", startDate);
 
   if (error) {
     console.error("❌ Error fetching NFT transfers:", error);
@@ -128,19 +128,20 @@ async function detectRugPull(contractAddress: string, days: number = 30) {
   ).length;
   const sellerToBuyerRatio = uniqueSellers.size / (uniqueBuyers.size || 1);
 
+  const R = RISK_RULES.rugPull;
   // ✅ 5️⃣ Noteikšana, vai pastāv Rug Pull risks
   let rugPullRisk = "Low";
   if (
-    whaleDropPercent > 20 ||
-    floor_price_24h < -30 ||
-    largeTransfers > 10 ||
-    sellerToBuyerRatio > 2
+    whaleDropPercent > R.high.whaleDrop ||
+    floor_price_24h < R.high.floorDrop24h ||
+    largeTransfers > R.high.largeTransfers ||
+    sellerToBuyerRatio > R.high.sellerToBuyerRatio
   ) {
     rugPullRisk = "High";
   } else if (
-    whaleDropPercent > 10 ||
-    floor_price_7d < -20 ||
-    sellerToBuyerRatio > 1.5
+    whaleDropPercent > R.medium.whaleDrop ||
+    floor_price_7d < R.medium.floorDrop7d ||
+    sellerToBuyerRatio > R.medium.sellerToBuyerRatio
   ) {
     rugPullRisk = "Medium";
   }
