@@ -12,12 +12,14 @@ interface LogoProps {
   size?: number; // SVG izmērs
   textSize?: number; // Teksta izmērs
   color?: "white" | "black" | "purple" | "gradient" | "auto";
+  label?: boolean;
 }
 
 const Logo: React.FC<LogoProps> = ({
   size = 48,
   textSize = 24,
   color = "auto",
+  label = true,
 }) => {
   const { resolvedTheme } = useTheme();
 
@@ -47,23 +49,25 @@ const Logo: React.FC<LogoProps> = ({
       </svg>
 
       {/* 🔹 Teksts */}
-      <span
-        className={`${michroma.className} font-extrabold`}
-        style={{ fontSize: `${textSize}px` }}
-      >
-        <div className="flex flex-col tracking-tight leading-none">
-          <span
-            className={`${colorVariants[autoColor]} text-[27px] leading-none`}
-          >
-            NFTs
-          </span>
-          <span
-            className={`text-[19px] p-0 m-0 ${colorVariants[autoColor]} leading-none`}
-          >
-            GUARD
-          </span>
-        </div>
-      </span>
+      {label && (
+        <span
+          className={`${michroma.className} font-extrabold`}
+          style={{ fontSize: `${textSize}px` }}
+        >
+          <div className="flex flex-col tracking-tight leading-none">
+            <span
+              className={`${colorVariants[autoColor]} text-[27px] leading-none`}
+            >
+              NFTs
+            </span>
+            <span
+              className={`text-[19px] p-0 m-0 ${colorVariants[autoColor]} leading-none`}
+            >
+              GUARD
+            </span>
+          </div>
+        </span>
+      )}
     </div>
   );
 };

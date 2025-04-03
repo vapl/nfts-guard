@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import Input from "./ui/Input";
+import { Input } from "./ui/Input";
 import Button from "./ui/Button";
 import { supabase } from "@/lib/supabase/supabase";
 
@@ -62,7 +62,7 @@ const NewsletterSection: React.FC<NewsletterProps> = ({
     }
 
     try {
-      const response = await fetch("/api/send-email", {
+      const response = await fetch("/api/subscribeEmail", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -108,15 +108,15 @@ const NewsletterSection: React.FC<NewsletterProps> = ({
         flex 
         flex-col 
         items-center 
-        justify-center 
-        py-16 
+        justify-center
         px-6 
         md:px-12 
         text-text
         rounded-xl
-        max-w-7xl 
+        max-w-7xl
         w-auto
         mx-auto
+        pt-48
       "
     >
       <motion.div

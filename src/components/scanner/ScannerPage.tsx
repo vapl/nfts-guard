@@ -8,7 +8,7 @@ import { ScannerResultsProps } from "@/types/apiTypes/globalApiTypes";
 import { searchSuggestionProps } from "@/types/apiTypes/globalApiTypes";
 import LoadingCardSkeleton from "../loadings/LoadingCardSceleton";
 import Button from "../ui/Button";
-import Input from "../ui/Input";
+import { Input } from "../ui/Input";
 
 export default function ScannerPage() {
   const [contractInput, setContractInput] = useState("");
@@ -110,8 +110,8 @@ export default function ScannerPage() {
   };
 
   return (
-    <div className="flex flex-col items-center w-full py-12 px-2">
-      <h1 className="text-2xl md:text-3xl font-bold text-heading">
+    <div className="flex flex-col items-center w-full py-12 px-2 pt-36">
+      <h1 className="text-3xl md:text-5xl font-extrabold mb-12 mt-6 text-heading">
         Scan NFT for Free (beta)
       </h1>
       <p className="text-paragraph text-sm mb-4">
@@ -143,34 +143,38 @@ export default function ScannerPage() {
         />
 
         {suggestions.length > 0 && contractInput !== "" && (
-          <div
-            className="absolute top-full mt-1 w-full bg-card border border-gray-300 rounded-lg drop-shadow-xl z-20
-             scrollbar-thin scrollbar-thumb-purple-600 scrollbar-track-gray-800 max-h-[500px] overflow-auto"
-          >
-            {suggestions.map((collection) => (
-              <div
-                key={collection.id}
-                onClick={() => {
-                  setContractInput(collection.id);
-                  setQuery("");
-                  setSuggestions([]);
-                }}
-                className="flex items-center p-3 hover:bg-gray-200 dark:hover:bg-[#334155] cursor-pointer gap-3"
-              >
-                <Image
-                  src={collection.image || "N/A"}
-                  alt={collection.name || "N/A"}
-                  width={32}
-                  height={32}
-                  className="rounded-md"
-                  unoptimized
-                />
-                <div className="text-sm text-paragraph">
-                  <p className="font-medium">{collection.name}</p>
-                  <p className="text-xs text-paragraph">{collection.symbol}</p>
+          <div className="overflow-hidden rounded-lg">
+            <div
+              className="absolute left-0 top-full mt-1 w-full bg-card border border-gray-300 dark:border-gray-700 rounded-lg drop-shadow-xl z-20
+             custom-scrollbar max-h-[300px] overflow-auto"
+            >
+              {suggestions.map((collection) => (
+                <div
+                  key={collection.id}
+                  onClick={() => {
+                    setContractInput(collection.id);
+                    setQuery("");
+                    setSuggestions([]);
+                  }}
+                  className="flex items-center p-3 hover:bg-indigo-400 dark:hover:bg-purple-600 cursor-pointer gap-3"
+                >
+                  <Image
+                    src={collection.image || "N/A"}
+                    alt={collection.name || "N/A"}
+                    width={32}
+                    height={32}
+                    className="rounded-md"
+                    unoptimized
+                  />
+                  <div className="text-sm text-paragraph">
+                    <p className="font-medium">{collection.name}</p>
+                    <p className="text-xs text-paragraph">
+                      {collection.symbol}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
       </div>

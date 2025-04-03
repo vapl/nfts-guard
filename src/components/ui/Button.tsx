@@ -7,10 +7,12 @@ interface ButtonProps {
   disabled?: boolean;
   isLoading?: boolean;
   loadingLabel?: string;
-  onClick: () => void;
   className?: string;
   animate?: boolean;
   transition?: object;
+  onClick: React.MouseEventHandler<HTMLButtonElement>;
+  onMouseEnter?: React.MouseEventHandler<HTMLButtonElement>;
+  onMouseLeave?: React.MouseEventHandler<HTMLButtonElement>;
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -18,11 +20,13 @@ const Button: React.FC<ButtonProps> = ({
   style = "primary",
   disabled = false,
   isLoading = false,
-  loadingLabel = "Loading",
-  onClick,
+  loadingLabel = "",
   className = "",
   animate = false,
   transition,
+  onClick,
+  onMouseEnter,
+  onMouseLeave,
 }) => {
   const baseClasses =
     "px-6 py-3 rounded-lg font-semibold transition whitespace-nowrap z-10 flex items-center justify-center gap-2";
@@ -48,6 +52,8 @@ const Button: React.FC<ButtonProps> = ({
   return (
     <motion.button
       onClick={onClick}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
       disabled={disabled || isLoading}
       className={`${baseClasses} ${styleClasses} ${disabledClasses} ${className}`}
       animate={motionAnimate}

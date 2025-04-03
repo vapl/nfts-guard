@@ -58,7 +58,7 @@ export default async function RootLayout({ children, params }: LayoutProps) {
         />
       </head>
 
-      <body>
+      <body className="min-h-screen bg-page-gradient transition-colors duration-300">
         <ThemeProvider attribute="class" enableSystem defaultTheme="system">
           <ScanProvider>
             {children}

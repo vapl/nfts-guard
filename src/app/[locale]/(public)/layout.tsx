@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import "@/app/metadata";
-// import Navbar from "@/components/Navbar";
-// import Footer from "@/components/Footer";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import NetworkEffect from "@/components/NetworkEffect";
 
 export const metadata: Metadata = {
   title: "NFTs Guard | Scan NFT Risks Now",
@@ -16,10 +17,10 @@ export default function LandingPageLayout({
 }>) {
   return (
     <>
-      {/* Navbar */}
-      {/* <Navbar /> */}
+      <NetworkEffect />
+      <Navbar />
       {children}
-      {/* <Footer /> */}
+      <Footer />
     </>
   );
 }

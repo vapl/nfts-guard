@@ -105,9 +105,21 @@
     @apply px-6 py-3 text-lg font-semibold rounded-lg shadow-lg text-white cursor-pointer transition;
     background-image: linear-gradient(
       to right,
-      theme(colors.purple.600),
-      theme(colors.indigo.500)
+      oklch(55.8% 0.288 302.321),
+      oklch(58.5% 0.233 277.117)
     );
+  }
+
+  .border-gradient {
+    background-image: linear-gradient(
+      to right,
+      oklch(55.8% 0.288 302.321),
+      oklch(58.5% 0.233 277.117)
+    );
+  }
+
+  .border-gradient > .inner {
+    @apply block rounded-full;
   }
 
   .btn-gradient:hover {
@@ -167,4 +179,39 @@ body {
 }
 .dark .bg-page-gradient {
   @apply bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950;
+}
+
+@layer utilities {
+  .custom-scrollbar {
+    overflow: auto;
+    scrollbar-gutter: stable; /* saglabā vietu scrollbaram */
+    clip-path: inset(0 round 0.5rem); /* atbilst rounded-lg */
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 0px;
+  }
+
+  .custom-scrollbar:hover::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #e1e1e1;
+    border-radius: 10px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 10px;
+  }
+
+  /* Dark mode support */
+  .dark .custom-scrollbar::-webkit-scrollbar-track {
+    background: #2c2c2c;
+  }
+
+  .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #555;
+  }
 }
