@@ -46,7 +46,7 @@ const SafetyScore: React.FC<SafetyScoreProps> = ({ score, riskLevel }) => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center">
+    <div className="flex flex-col items-center justify-center text-nowrap">
       <p className="text-heading text-lg font-semibold mb-2">Safety Score</p>
       <div className="relative w-20 h-20">
         <svg className="w-full h-full" viewBox="0 0 36 36">

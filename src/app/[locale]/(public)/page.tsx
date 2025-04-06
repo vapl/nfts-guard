@@ -2,8 +2,6 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Search, ShieldCheck } from "lucide-react";
-import { GiSpeedometer } from "react-icons/gi";
 import Image from "next/image";
 import FAQSection from "@/components/FaqSection";
 import NewsletterSection from "@/components/NewsLetterSection";
@@ -14,28 +12,8 @@ import { FaRegChartBar } from "react-icons/fa";
 import Button from "@/components/ui/Button";
 import ScrollToTop from "@/components/ui/ScrollToTop";
 import { useRouter } from "next/navigation";
-import Decoration from "@/components/decorations/Decoration";
-
-const benefits = [
-  {
-    icon: <ShieldCheck size={48} className="text-accent-purple" />,
-    title: "Rug Pull & Scam Detection",
-    description:
-      "Spot potential rug pulls using real whale activity, selling patterns, and on-chain anomalies — before it's too late.",
-  },
-  {
-    icon: <Search size={48} className="text-accent-purple" />,
-    title: "Deep NFT Intelligence",
-    description:
-      "Get instant insights into wash trading, suspicious wallets, holder distribution and liquidity risks in any NFT collection.",
-  },
-  {
-    icon: <GiSpeedometer size={48} className="text-accent-purple" />,
-    title: "Safety Score",
-    description:
-      "Every NFT collection gets a Safety Score (0–100) based on objective risk signals — including rug pull indicators, wash trading, liquidity, and whale behavior. Transparent, easy to understand, and actionable.",
-  },
-];
+import { benefits } from "@/components/sections/benefits";
+import BenefitsCarousel from "@/components/BenefitsCarousel";
 
 const steps = [
   {
@@ -71,10 +49,10 @@ export default function HeroSection() {
 
       <section
         id="hero"
-        className="flex flex-col items-center justify-center pt-48"
+        className="w-full flex flex-col px-4 items-center justify-center pt-48"
       >
         {/* Main Content */}
-        <div className=" text-center min-h-screen max-w-4xl">
+        <div className=" text-center max-w-4xl">
           <motion.h1
             className="text-5xl md:text-7xl font-extrabold text-heading tracking-tight leading-tight mb-6"
             initial={{ opacity: 0, y: -50 }}
@@ -116,23 +94,22 @@ export default function HeroSection() {
               }}
             />
           </motion.div>
-          {/* Display API response */}
         </div>
       </section>
 
       {/* Key benefits section */}
       <section
         id="benefits"
-        className="relative w-full min-h-screen lg:px-16 xl:px-24"
+        className="relative w-full lg:px-16 xl:px-24 mt-48"
       >
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="text-center max-w-3xl mx-auto"
+          className="text-center max-w-3xl mx-auto px-4"
         >
           <h2 className="text-5xl md:text-7xl font-extrabold leading-tight text-heading">
-            Why <span className="text-accent-purple">NFTs Guard?</span> is{" "}
+            <span className="text-accent-purple">NFTs Guard</span> is{" "}
             <span className="text-accent-purple">Trusted</span> by Investors
           </h2>
           <p className="text-lg text-paragraph mt-4">
@@ -141,29 +118,36 @@ export default function HeroSection() {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mt-16">
-          {benefits.map((benefit, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: index * 0.2 }}
-              viewport={{ once: true }}
-              className="flex flex-col items-center text-center bg-card p-8 rounded-2xl drop-shadow-lg"
-            >
-              {benefit.icon}
-              <h3 className="text-2xl font-bold text-heading mt-4">
-                {benefit.title}
-              </h3>
-              <p className="text-paragraph mt-2">{benefit.description}</p>
-            </motion.div>
-          ))}
+        <div className="mt-16">
+          {/* Mobile carousel view */}
+          <div className="md:hidden">
+            <BenefitsCarousel />
+          </div>
+
+          {/* Desktop grid view */}
+          <div className="hidden md:grid md:grid-cols-2 xl:grid-cols-4 gap-6 px-4 mt-8">
+            {benefits.map((benefit, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6, delay: index * 0.2 }}
+                viewport={{ once: true }}
+                className="flex flex-col items-center text-center bg-card p-8 rounded-2xl drop-shadow-lg"
+              >
+                {benefit.icon}
+                <h3 className="text-2xl font-bold text-heading mt-4">
+                  {benefit.title}
+                </h3>
+                <p className="text-paragraph mt-2">{benefit.description}</p>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* How its works section */}
-      <section className="relative w-full min-h-screen flex flex-col lg:px-16 xl:px-24 items-center justify-between text-center md:text-left">
-        {/* Text Content */}
+      <section className="relative w-full mt-48 flex flex-col px-3 lg:px-16 xl:px-24 items-center justify-between text-center md:text-left">
         <span className="bg-purple-700 bg-opacity-20 text-white text-sm px-4 py-1 rounded-full uppercase tracking-wider">
           How It Works
         </span>
@@ -172,7 +156,7 @@ export default function HeroSection() {
         </h2>
         <div className="flex flex-col justify-around items-center md:flex-row md:w-full gap-8 mt-16 mb-24">
           <div className="">
-            <div className="flex flex-col gap-8">
+            <div className="flex flex-col gap-6">
               {steps.map((step, index) => (
                 <motion.div
                   key={index}
@@ -182,7 +166,7 @@ export default function HeroSection() {
                   transition={{ duration: 0.6, delay: index * 0.3 }}
                 >
                   <div className="text-3xl">{step.icon}</div>
-                  <div>
+                  <div className="flex flex-1 flex-col items-start ">
                     <h3 className="text-xl text-heading font-semibold mb-1">
                       {step.title}
                     </h3>
@@ -195,7 +179,6 @@ export default function HeroSection() {
             </div>
           </div>
 
-          {/* Animated Image */}
           <motion.div
             className="relative flex justify-center mt-12 md:mt-0"
             animate={isAnimating ? { x: [0, 12, 0], y: [0, -12, 0] } : {}}
@@ -217,11 +200,10 @@ export default function HeroSection() {
         </div>
 
         <Button
-          label="Try Demo Scan Now"
+          label="Try Scanner Now"
           animate={true}
           onClick={() => {
-            const section = document.getElementById("hero");
-            section?.scrollIntoView({ behavior: "smooth" });
+            router.push("/scanner");
           }}
         />
       </section>
@@ -242,9 +224,6 @@ export default function HeroSection() {
         }
         ctaText="Join the Waitlist"
       />
-
-      {/* Animated Background Gradient */}
-      <Decoration />
     </>
   );
 }

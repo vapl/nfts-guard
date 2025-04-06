@@ -68,6 +68,11 @@
   .bg-card {
     background-color: rgb(var(--card));
   }
+  .bg-card-blur {
+    background-color: rgb(var(--card) / 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
   .bg-primary {
     background-color: rgb(var(--primary));
   }
@@ -185,7 +190,6 @@ body {
   .custom-scrollbar {
     overflow: auto;
     scrollbar-gutter: stable; /* saglabā vietu scrollbaram */
-    clip-path: inset(0 round 0.5rem); /* atbilst rounded-lg */
   }
 
   .custom-scrollbar::-webkit-scrollbar {
@@ -213,5 +217,15 @@ body {
 
   .dark .custom-scrollbar::-webkit-scrollbar-thumb {
     background-color: #555;
+  }
+
+  /* Piemēro visiem elementiem ar .hide-scrollbar */
+  .hide-scrollbar {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
   }
 }

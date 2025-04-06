@@ -14,45 +14,18 @@ import TooltipInfo from "../tooltips/TooltipInfo";
 import { AiOutlineSafety } from "react-icons/ai";
 import { LuShieldAlert } from "react-icons/lu";
 import { GoShieldCheck } from "react-icons/go";
-import { NFTCollectionOwnerProps } from "@/types/apiTypes/globalApiTypes";
-
-interface HolderGroupData {
-  "1": number;
-  "2-5": number;
-  "6-10": number;
-  "11+": number;
-}
+import { HolderDistribution } from "@/types/apiTypes/holderDistribution";
 
 interface HolderDistributionChartProps {
-  data: HolderGroupData;
+  data: HolderDistribution;
   totalHolders: number;
   contractAddress: string;
-}
-
-export function generateHolderDistributionData(
-  owners: NFTCollectionOwnerProps[]
-): HolderGroupData {
-  const result: HolderGroupData = {
-    "1": 0,
-    "2-5": 0,
-    "6-10": 0,
-    "11+": 0,
-  };
-
-  for (const owner of owners) {
-    const count = owner.token_count;
-    if (count === 1) result["1"] += 1;
-    else if (count >= 2 && count <= 5) result["2-5"] += 1;
-    else if (count >= 6 && count <= 10) result["6-10"] += 1;
-    else if (count >= 11) result["11+"] += 1;
-  }
-
-  return result;
+  tooltipInfo?: string;
 }
 
 export const HolderDistributionChart: React.FC<
   HolderDistributionChartProps
-> = ({ data, totalHolders }) => {
+> = ({ data, totalHolders, tooltipInfo }) => {
   const chartData = [
     {
       range: "Single NFT",
@@ -100,14 +73,19 @@ export const HolderDistributionChart: React.FC<
     );
 
   return (
-    <div className="bg-card p-6 rounded-xl drop-shadow-lg w-full">
-      <div className="flex-1 flex gap-3">
-        <h4 className="text-paragraph text-sm mb-1">Holder Distribution</h4>
-        <TooltipInfo content="Shows how many wallets hold different amounts of NFTs in this collection. Useful for identifying decentralization." />
+    <div className="relative flex flex-col justify-between bg-card p-6 rounded-xl drop-shadow-lg w-full h-full">
+      <div className="block">
+        <div className="flex gap-3 items-center">
+          <h4 className="text-paragraph text-sm mb-1">Holder Distribution</h4>
+          <TooltipInfo
+            content={
+              tooltipInfo ??
+              "Shows how many wallets hold different amounts of NFTs in this collection. Useful for identifying decentralization."
+            }
+          />
+        </div>
+        <div className="text-2xl font-bold text-heading">{`Whales ${whalePercentText}`}</div>
       </div>
-
-      <div className="text-2xl font-bold text-heading">{`Whales ${whalePercentText}`}</div>
-
       <ResponsiveContainer width="100%" height={200}>
         <BarChart data={chartData} margin={{ top: 30, bottom: 30 }}>
           <XAxis
@@ -133,7 +111,6 @@ export const HolderDistributionChart: React.FC<
           </Bar>
         </BarChart>
       </ResponsiveContainer>
-
       <p className="text-sm text-paragraph mt-6 italic">{interpretation}</p>
     </div>
   );

@@ -5,18 +5,14 @@ import { motion } from "framer-motion";
 import { Input } from "./ui/Input";
 import Button from "./ui/Button";
 import { supabase } from "@/lib/supabase/supabase";
+import { MdEmail } from "react-icons/md";
+import { getValidationError } from "@/utils/validation";
 
 interface NewsletterProps {
   headingText?: React.ReactNode;
   bodyText?: React.ReactNode;
   ctaText?: string;
 }
-
-const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-
-const validateEmail = (email: string): boolean => {
-  return emailRegex.test(email);
-};
 
 const NewsletterSection: React.FC<NewsletterProps> = ({
   headingText = "Get Newsletter",
@@ -35,25 +31,19 @@ const NewsletterSection: React.FC<NewsletterProps> = ({
   };
 
   const handleSubscribe = async () => {
-    if (!email) {
-      setMessage("Please enter a valid email.");
+    const error = getValidationError("email", email, undefined, true);
+    if (error) {
+      setMessage(error);
       setMessageType("error");
       clearMessageAfterDealay();
       return;
     }
 
-    if (!validateEmail(email)) {
-      setMessage("Invalid email format. Please enter a valid email.");
-      setMessageType("error");
-      clearMessageAfterDealay();
-      return;
-    }
-
-    const { error } = await supabase
+    const { error: dbError } = await supabase
       .from("subscribers")
       .insert([{ email, source: "coming_soon" }]);
 
-    if (error) {
+    if (dbError) {
       setMessage("This email is already subscribed!");
       setMessageType("error");
       setEmail("");
@@ -151,6 +141,7 @@ const NewsletterSection: React.FC<NewsletterProps> = ({
           type="email"
           placeholder="Enter Your email"
           value={email}
+          iconLeft={<MdEmail size={24} className="ml-2" />}
           onChange={(e) => setEmail(e.target.value)}
         />
         <Button label={ctaText} onClick={handleSubscribe} />

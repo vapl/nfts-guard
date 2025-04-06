@@ -35,7 +35,7 @@ const Logo: React.FC<LogoProps> = ({
   };
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-2">
       {/* 🔹 SVG Logo */}
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -56,12 +56,14 @@ const Logo: React.FC<LogoProps> = ({
         >
           <div className="flex flex-col tracking-tight leading-none">
             <span
-              className={`${colorVariants[autoColor]} text-[27px] leading-none`}
+              className={`${colorVariants[autoColor]} leading-none`}
+              style={{ fontSize: `${textSize}px` }}
             >
               NFTs
             </span>
             <span
-              className={`text-[19px] p-0 m-0 ${colorVariants[autoColor]} leading-none`}
+              className={`${colorVariants[autoColor]} leading-none`}
+              style={{ fontSize: `${(textSize * 19) / 27}px` }}
             >
               GUARD
             </span>

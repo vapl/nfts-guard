@@ -162,7 +162,7 @@ export async function getNFTWhaleActivity(
       }
 
       salesMap[sale.to_wallet].hold_times.push(holdTime);
-      salesMap[sale.to_wallet].total_eth_spent += sale.price || 0;
+      salesMap[sale.to_wallet].total_eth_spent += (sale.price || 0) / 1e18;
       salesMap[sale.to_wallet].total_usd_spent += sale.usd_price || 0;
       if (sale.price)
         salesMap[sale.to_wallet].price_volatility.push(sale.price);
@@ -278,6 +278,42 @@ export async function getNFTWhaleActivity(
         whale_network: Array.from(whaleNetworkMap[whale.wallet] || []),
       };
     });
+
+    // Add missing whales from salesMap
+    for (const wallet of whaleWallets) {
+      const alreadyAdded = allWhaleActivity.find((w) => w.wallet === wallet);
+      const spendingData = salesMap[wallet];
+
+      if (alreadyAdded || !spendingData) continue;
+
+      const avgHoldTime = spendingData.hold_times.length
+        ? spendingData.hold_times.reduce((a, b) => a + b, 0) /
+          spendingData.hold_times.length
+        : 0;
+
+      const priceVolatility =
+        spendingData.price_volatility.length > 1
+          ? Math.max(...spendingData.price_volatility) -
+            Math.min(...spendingData.price_volatility)
+          : 0;
+
+      allWhaleActivity.push({
+        contract_address: contractAddress,
+        wallet,
+        whale_buys: 1, // pieņem ka vismaz 1 pirkums
+        whale_sells: 0,
+        whale_transfers: 0,
+        total_eth_spent: spendingData.total_eth_spent,
+        total_usd_spent: spendingData.total_usd_spent,
+        avg_hold_time: avgHoldTime,
+        price_volatility: priceVolatility,
+        whale_type: avgHoldTime < 7 ? "Flipper Whale" : "Accumulating Whale",
+        last_updated: new Date().toISOString(),
+        total_activity: 1,
+        frequent_recipients: [],
+        whale_network: [],
+      });
+    }
 
     const whaleStats = generateWhaleStats(allWhaleActivity, whaleOwners.length);
     whaleStats.activityLog = generateActivityLog(salesData || []);

@@ -11,6 +11,7 @@ interface InputProps {
   required?: boolean;
   validate?: "email";
   showError?: boolean;
+  iconLeft?: React.ReactNode;
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
@@ -24,6 +25,7 @@ export const Input: React.FC<InputProps> = ({
   required = false,
   validate,
   showError = false,
+  iconLeft = null,
   onChange,
 }) => {
   const [isValid, setIsValid] = useState<boolean | null>(null);
@@ -47,18 +49,26 @@ export const Input: React.FC<InputProps> = ({
 
   return (
     <div className="flex flex-col w-full gap-1">
-      <input
-        type={type}
-        name={name}
-        placeholder={placeholder}
-        value={value}
-        disabled={disabled}
-        required={required}
-        onChange={onChange}
-        className={`input ${className} ${
-          showEmailError || showRequiredError ? "border-red-500" : ""
-        }`}
-      />
+      <div className="relative w-full">
+        {iconLeft && (
+          <span className="absolute left-1 top-1/2 transform -translate-y-1/2 text-gray-400">
+            {iconLeft}
+          </span>
+        )}
+
+        <input
+          type={type}
+          name={name}
+          placeholder={placeholder}
+          value={value}
+          disabled={disabled}
+          required={required}
+          onChange={onChange}
+          className={`input ${iconLeft ? "!pl-12" : "pl-0"} ${className} ${
+            showEmailError || showRequiredError ? "border-red-500" : ""
+          }`}
+        />
+      </div>
       {showRequiredError && (
         <span className="text-red-500 text-sm">This field is required</span>
       )}

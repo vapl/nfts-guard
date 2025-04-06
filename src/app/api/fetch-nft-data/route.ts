@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { fetchAndAnalyzeNFTData } from "@/lib/fetchAndStoreNFTData";
+import { supabase } from "@/lib/supabase/supabase";
+import { generateHolderDistributionData } from "@/lib/analysis/generateHolderDistributionData";
+import { NFTCollectionOwnerProps } from "@/types/apiTypes/globalApiTypes";
+import { upsertHolderDistribution } from "@/lib/supabase/helpers/upsertHolderDistribution";
 
 export async function POST(req: Request) {
   try {
@@ -13,18 +17,42 @@ export async function POST(req: Request) {
       );
     }
 
+    // ✅ Fetch core NFT data + risk analysis
     const result = await fetchAndAnalyzeNFTData(contractAddress, timePeriod);
 
-    // Optionally calculate safetyScore here based on result
+    // ✅ Safety Score calculation
     const washIndex = result?.washTradingAnalysis?.washTradingIndex ?? 0;
     const rugRisk = result?.rugPullAnalysis?.risk_level ?? "N/A";
-
     const safetyScore = calculateSafetyScore(washIndex, rugRisk);
+
+    // ✅ Holder Distribution calculation
+    const { data: owners, error } = await supabase
+      .from("nft_owners")
+      .select("wallet, token_count")
+      .eq("contract_address", contractAddress);
+
+    if (error || !owners) {
+      console.error("❌ Supabase error fetching holders:", error);
+      return NextResponse.json(
+        { error: "Error fetching holders" },
+        { status: 500 }
+      );
+    }
+
+    const holderDistribution =
+      owners && Array.isArray(owners)
+        ? generateHolderDistributionData(owners as NFTCollectionOwnerProps[])
+        : null;
+
+    if (holderDistribution) {
+      await upsertHolderDistribution(contractAddress, holderDistribution);
+    }
 
     return NextResponse.json({
       contractAddress,
       safetyScore,
-      riskLevel: result?.rugPullAnalysis.risk_level ?? "N/A",
+      riskLevel: rugRisk,
+      holderDistribution,
       ...result,
     });
   } catch (error) {

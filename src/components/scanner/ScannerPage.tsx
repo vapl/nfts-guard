@@ -9,6 +9,17 @@ import { searchSuggestionProps } from "@/types/apiTypes/globalApiTypes";
 import LoadingCardSkeleton from "../loadings/LoadingCardSceleton";
 import Button from "../ui/Button";
 import { Input } from "../ui/Input";
+import { MdOutlineHideImage } from "react-icons/md";
+import { FaEthereum } from "react-icons/fa";
+import { SiSolana, SiPolygon } from "react-icons/si";
+import { getValidationError } from "@/utils/validation";
+import Badge from "../ui/Badge";
+
+const CHAIN_OPTIONS = [
+  { name: "Ethereum", value: "ethereum", icon: <FaEthereum size={24} /> },
+  { name: "Solana (soon)", value: "solana", icon: <SiSolana size={24} /> },
+  { name: "Polygon (soon)", value: "polygon", icon: <SiPolygon size={24} /> },
+];
 
 export default function ScannerPage() {
   const [contractInput, setContractInput] = useState("");
@@ -19,8 +30,25 @@ export default function ScannerPage() {
   const [query, setQuery] = useState("");
   const debounceQuery = useDebounce(query, 300);
   const [suggestions, setSuggestions] = useState<searchSuggestionProps[]>([]);
+  const [selectedChain, setSelectedChain] = useState(CHAIN_OPTIONS[0]);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
+
+  // Click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -79,13 +107,24 @@ export default function ScannerPage() {
   };
 
   const handleScan = async () => {
-    if (!contractInput.trim()) {
+    // 1. Validācija no formas
+    const error = getValidationError(
+      "address",
+      contractInput,
+      selectedChain.value
+    );
+    if (error) {
       setMessageType("error");
-      setMessage("Enter contract address");
+      setMessage(error); // <-- Invalid address formāts
       clearMessageAfterDelay();
+      return;
     }
+
+    // 2. Tīri viss, sāk fetch
     setIsLoading(true);
     setResult(undefined);
+    setMessage("");
+    setMessageType("");
 
     try {
       const res = await fetch("/api/fetch-nft-data", {
@@ -95,58 +134,126 @@ export default function ScannerPage() {
       });
 
       const data = await res.json();
-      if (data.error) setMessageType(data.error);
-      else {
-        setResult(data);
-        setContractInput("");
+
+      // 3. API kļūda vai nav kolekcijas
+      if (!res.ok || data.error) {
+        setMessageType("error");
+        setMessage("Server error occurred. Please try again.");
+        clearMessageAfterDelay();
+        return;
       }
+
+      if (!data.collectionData) {
+        setMessageType("error");
+        setMessage("NFT collection not found. Try another address.");
+        clearMessageAfterDelay();
+        return;
+      }
+
+      // 4. Panākums!
+      setResult(data);
+      setContractInput("");
     } catch (err) {
-      console.error(err);
+      console.error("Scanner error:", err);
       setMessageType("error");
-      setMessage("Scan failed");
+      setMessage("Scan failed. Please try again later.");
       clearMessageAfterDelay();
     }
+
     setIsLoading(false);
   };
 
   return (
-    <div className="flex flex-col items-center w-full py-12 px-2 pt-36">
-      <h1 className="text-3xl md:text-5xl font-extrabold mb-12 mt-6 text-heading">
-        Scan NFT for Free (beta)
-      </h1>
-      <p className="text-paragraph text-sm mb-4">
-        *Limited to 5 scans per month on free plan
-      </p>
+    <>
+      <div className="relative flex flex-col items-center w-full py-12 px-3 pt-36 z-10">
+        <div className="mb-4 flex flex-col items-end">
+          <Badge name="beta" className="text-xs px-3 py-0.5 self-end" />
+          <div className="text-center mb-4">
+            <h2 className="text-4xl md:text-5xl font-extrabold leading-tight text-heading">
+              Scan <span className="text-accent-purple">NFTs</span> stay{" "}
+              <span className="text-accent-purple">Safe</span>
+            </h2>
+            <p className="text-lg text-paragraph mt-4">
+              Scan 1 collection instantly. No wallet. No signup.
+            </p>
+          </div>
+        </div>
 
-      <div
-        ref={wrapperRef}
-        className="relative z-10 flex flex-col md:flex-row gap-2 items-center bg-card p-2 rounded-lg w-full max-w-lg md:max-w-2xl drop-shadow-lg"
-      >
-        <Input
-          type="text"
-          placeholder="Enter NFT contract address or colection name"
-          value={contractInput}
-          onChange={(e) => {
-            const value = e.target.value;
-            setContractInput(value);
-            setQuery(value);
-          }}
-        />
+        <div
+          ref={wrapperRef}
+          className="relative flex flex-col md:flex-row gap-2 items-center bg-card p-2 rounded-lg w-full max-w-lg md:max-w-2xl drop-shadow-lg"
+        >
+          <Input
+            type="text"
+            placeholder="Enter NFT contract address or colection name"
+            value={contractInput}
+            iconLeft={
+              <>
+                {/* Chain selector */}
+                <div ref={dropdownRef} className="relative ">
+                  <button
+                    type="button"
+                    onClick={() => setDropdownOpen((prev) => !prev)}
+                    className={`flex items-center gap-0 px-1 py-0.5 ${
+                      contractInput
+                        ? "text-purple-500"
+                        : "hover:text-purple-500 text-gray-400"
+                    } cursor-pointer`}
+                  >
+                    {selectedChain.icon}
+                    <svg
+                      className="w-3 h-3"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </button>
 
-        <Button
-          label="Scan"
-          loadingLabel="Scanning"
-          isLoading={isLoading}
-          disabled={isLoading}
-          onClick={handleScan}
-          className="w-full md:w-1/4"
-        />
+                  {dropdownOpen && (
+                    <div className="absolute -left-3 mt-3 bg-card p-2 rounded-b-lg z-50 drop-shadow-lg">
+                      {CHAIN_OPTIONS.map((chain) => {
+                        const isDisabled = chain.name !== "Ethereum";
+                        return (
+                          <button
+                            key={chain.name}
+                            onClick={() => {
+                              if (isDisabled) return;
+                              setSelectedChain(chain);
+                              setDropdownOpen(false); // close after click
+                            }}
+                            className={`flex items-center text-nowrap gap-3 px-2 py-2 w-full text-left text-sm cursor-pointer hover:bg-accent ${
+                              chain.value !== "ethereum"
+                                ? "cursor-not-allowed opacity-60"
+                                : "text-gray-400 hover:text-purple-500"
+                            }`}
+                          >
+                            {chain.icon} {chain.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </>
+            }
+            onChange={(e) => {
+              const value = e.target.value;
+              setContractInput(value);
+              setQuery(value);
+            }}
+          />
 
-        {suggestions.length > 0 && contractInput !== "" && (
-          <div className="overflow-hidden rounded-lg">
+          {suggestions.length > 0 && contractInput !== "" && (
             <div
-              className="absolute left-0 top-full mt-1 w-full bg-card border border-gray-300 dark:border-gray-700 rounded-lg drop-shadow-xl z-20
-             custom-scrollbar max-h-[300px] overflow-auto"
+              className="absolute left-0 top-full -mt-16 md:-mt-2 rounded-b-lg w-full bg-card shadow-lg -z-1
+             custom-scrollbar max-h-[300px]"
             >
               {suggestions.map((collection) => (
                 <div
@@ -158,14 +265,19 @@ export default function ScannerPage() {
                   }}
                   className="flex items-center p-3 hover:bg-indigo-400 dark:hover:bg-purple-600 cursor-pointer gap-3"
                 >
-                  <Image
-                    src={collection.image || "N/A"}
-                    alt={collection.name || "N/A"}
-                    width={32}
-                    height={32}
-                    className="rounded-md"
-                    unoptimized
-                  />
+                  {collection.image ? (
+                    <Image
+                      src={collection.image}
+                      alt={collection.name || "N/A"}
+                      width={32}
+                      height={32}
+                      className="rounded-md"
+                      unoptimized
+                    />
+                  ) : (
+                    <MdOutlineHideImage size={32} className="text-gray-400" />
+                  )}
+
                   <div className="text-sm text-paragraph">
                     <p className="font-medium">{collection.name}</p>
                     <p className="text-xs text-paragraph">
@@ -175,19 +287,30 @@ export default function ScannerPage() {
                 </div>
               ))}
             </div>
-          </div>
+          )}
+
+          <Button
+            label="Scan"
+            loadingLabel="Scanning"
+            isLoading={isLoading}
+            disabled={isLoading}
+            onClick={() => {
+              if (isLoading) return;
+              handleScan();
+            }}
+            className="relative w-full md:w-1/4 !-z-10"
+          />
+        </div>
+        {messageType && (
+          <p
+            className={`mt-2 text-sm font-medium ${
+              messageType === "success" ? "text-green-400" : "text-red-400"
+            }`}
+          >
+            {message}
+          </p>
         )}
       </div>
-      {messageType && (
-        <p
-          className={`mt-2 text-sm font-medium ${
-            messageType === "success" ? "text-green-400" : "text-red-400"
-          }`}
-        >
-          {message}
-        </p>
-      )}
-
       {isLoading && !messageType ? (
         <LoadingCardSkeleton />
       ) : (
@@ -204,6 +327,6 @@ export default function ScannerPage() {
           />
         )
       )}
-    </div>
+    </>
   );
 }

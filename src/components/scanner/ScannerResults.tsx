@@ -1,21 +1,24 @@
-import { useEffect, useState } from "react";
+// Refaktors turpinās: izmanto fetchHolderDistribution helperi datu ielādei
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import {
-  AlertTriangle,
-  Droplet,
-  ShieldCheck,
-  ShieldQuestion,
-} from "lucide-react";
-import { ScanResultCard } from "./ScannerResultCard";
-import { calculateSafetyScore } from "@/lib/analysis/calculateSafetyScore";
-import { MiniFloorPriceChart } from "../charts/MiniFloorPriceChart";
-import { ScannerResultsProps } from "@/types/apiTypes/globalApiTypes";
-import { WhaleStatsDashboard } from "./WhaleStatsCard";
-import { HolderDistribution } from "@/types/apiTypes/holderDistribution";
-import { HolderDistributionChart } from "../charts/HolderDistributionChart";
 import { FaRegCopy, FaCheck } from "react-icons/fa";
+import { ScanResultCard } from "./ScannerResultCard";
+import { WhaleStatsDashboard } from "./WhaleStatsCard";
+import { HolderDistributionChart } from "../charts/HolderDistributionChart";
 import SafetyScore from "../charts/SafetyScore";
 import { ShareOnXButton } from "../ShareOnXButton";
+import { AISummary } from "@/components/scanner/AISummaryCard";
+import { calculateSafetyScore } from "@/lib/analysis/calculateSafetyScore";
+import {
+  fetchSectionExplanation,
+  fetchScanSummary,
+} from "@/lib/openai/fetchExplanation";
+import { generateScanCards } from "@/components/scanner/generateScanCards";
+import { fetchHolderDistribution } from "@/lib/fetch/fetchHolderDistribution";
+import { ScannerResultsProps } from "@/types/apiTypes/globalApiTypes";
+import { HolderDistribution } from "@/types/apiTypes/holderDistribution";
+import { ScanSummaryInput } from "@/types/apiTypes/scanSummary";
+import LoadingSummaryCardSkeleton from "../loadings/LoadingSummaryCardSceleton";
 
 export function ScannerResults({
   contractAddress,
@@ -28,241 +31,11 @@ export function ScannerResults({
 }: ScannerResultsProps) {
   const [holderDistribution, setHolderDistribution] =
     useState<HolderDistribution | null>(null);
-
-  useEffect(() => {
-    async function fetchDistribution() {
-      const res = await fetch(
-        `/api/holder-distribution?contractAddress=${contractAddress}`
-      );
-      const json = await res.json();
-      setHolderDistribution(json);
-    }
-
-    fetchDistribution();
-  }, [contractAddress]);
-
-  const shortenAddress = (address: string) =>
-    `${address.slice(0, 6)}...${address.slice(-4)}`;
-
-  const [copied, setCopied] = useState<boolean>(false);
-
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(contractAddress);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const floorPriceData = [
-    { time: "30d", price: Number(collectionData.floor_price_change_30d ?? 0) },
-    { time: "7d", price: Number(collectionData.floor_price_change_7d ?? 0) },
-    { time: "24h", price: Number(collectionData.floor_price_change_24h ?? 0) },
-  ];
-
-  const liquidityRatio =
-    Number(collectionData.on_sale_count) / Number(collectionData.total_supply);
-
-  const cards = [
-    {
-      title: "Rug Pull Risk",
-      value: `${rugPullAnalysis?.risk_level ?? "N/A"}`,
-      details: [
-        {
-          label: "Whale Drop",
-          value: `${Number(rugPullAnalysis?.whale_drop_percent ?? 0).toFixed(
-            2
-          )}%`,
-        },
-        {
-          label: "Seller/Buyer Ratio",
-          value: rugPullAnalysis?.seller_to_buyer_ratio ?? "N/A",
-        },
-        {
-          label: "Unique Sellers",
-          value: rugPullAnalysis?.unique_sellers ?? "N/A",
-        },
-        {
-          label: "Unique Buyers",
-          value: rugPullAnalysis?.unique_buyers ?? "N/A",
-        },
-      ],
-      icon:
-        rugPullAnalysis?.risk_level === "Low" ? (
-          <ShieldCheck />
-        ) : rugPullAnalysis?.risk_level === "Medium" ? (
-          <ShieldQuestion />
-        ) : (
-          <AlertTriangle />
-        ),
-      variant:
-        rugPullAnalysis?.risk_level === "Low"
-          ? "Secure"
-          : rugPullAnalysis?.risk_level === "Medium"
-          ? "Caution"
-          : "Dangerous",
-      riskScore:
-        rugPullAnalysis?.risk_level === "Low"
-          ? 1
-          : rugPullAnalysis?.risk_level === "Medium"
-          ? 2
-          : 3,
-      volume: 0,
-      activity: 0,
-      tooltipInfo:
-        "Indicates the risk of the collection experiencing a rug pull, assessed by analyzing the percentage of whales dumping NFTs, seller-to-buyer ratio, and activity from unique sellers and buyers.",
-    },
-    {
-      title: "Wash Trading Index",
-      value: `${(washTradingAnalysis?.washTradingIndex ?? 0).toFixed(1)}%`,
-      details: [
-        {
-          label: "Suspicious Sales",
-          value: washTradingAnalysis?.suspiciousSalesCount ?? 0,
-        },
-        {
-          label: "Top Wallets",
-          value: washTradingAnalysis?.topWallets?.length ?? 0,
-        },
-      ],
-      icon:
-        washTradingAnalysis?.washTradingIndex > 50 ? (
-          <AlertTriangle />
-        ) : washTradingAnalysis?.washTradingIndex > 20 ? (
-          <ShieldQuestion />
-        ) : (
-          <ShieldCheck />
-        ),
-      variant:
-        washTradingAnalysis?.washTradingIndex > 50
-          ? "Dangerous"
-          : washTradingAnalysis?.washTradingIndex > 20
-          ? "Suspicious"
-          : "Secure",
-      riskScore: washTradingAnalysis?.washTradingIndex < 1 ? 1 : 2,
-      volume: 0,
-      activity: 0,
-      tooltipInfo:
-        "Represents the proportion of suspicious trades that could be wash trading, highlighting artificial inflation of sales. Includes the count of suspicious sales and top wallets involved.",
-    },
-    {
-      title: "Volume & Sales",
-      value: `${Number(collectionData.volume_all ?? 0).toFixed(2)} Ξ total`,
-      details: [
-        {
-          label: "24h Volume",
-          value: `${Number(collectionData.volume_1day ?? 0).toFixed(2)} Ξ`,
-        },
-        {
-          label: "7d Volume",
-          value: `${Number(collectionData.volume_7day ?? 0).toFixed(2)} Ξ`,
-        },
-        {
-          label: "30d Volume",
-          value: `${Number(collectionData.volume_30day ?? 0).toFixed(2)} Ξ`,
-        },
-        {
-          label: "Sales Count",
-          value: collectionData.sales_count ?? 0,
-        },
-      ],
-      riskScore: 0,
-      volume: collectionData.volume_all,
-      activity: 0,
-      tooltipInfo:
-        "Summarizes the total volume traded and sales count, including recent volume metrics (24h, 7 days, 30 days). Useful for assessing market activity.",
-    },
-    {
-      title: "Liquidity Score",
-      value: `${(liquidityRatio * 100).toFixed(1)}% Listed`,
-      details: [
-        {
-          label: "On Sale",
-          value: collectionData.on_sale_count ?? 0,
-        },
-        {
-          label: "Total Supply",
-          value: collectionData.total_supply ?? 0,
-        },
-      ],
-      icon: <Droplet />,
-      variant:
-        liquidityRatio < 0.1
-          ? "Secure"
-          : liquidityRatio < 0.3
-          ? "Caution"
-          : "Dangerous",
-      riskScore: liquidityRatio < 0.1 ? 1 : liquidityRatio < 0.3 ? 2 : 3,
-      volume: 0,
-      activity: 0,
-      tooltipInfo:
-        "Indicates how many NFTs are currently listed for sale out of the total supply. Higher listing = more selling pressure. Lower listing = stronger holder confidence and better long-term potential.",
-    },
-    {
-      title: "Floor Price Change",
-      value: `Current: ${Number(collectionData.floor_price ?? 0).toFixed(3)} Ξ`,
-      details: [
-        {
-          label: "24h",
-          value: `${Number(collectionData.floor_price_change_24h ?? 0).toFixed(
-            3
-          )} Ξ`,
-        },
-        {
-          label: "7d",
-          value: `${Number(collectionData.floor_price_change_7d ?? 0).toFixed(
-            3
-          )} Ξ`,
-        },
-        {
-          label: "30d",
-          value: `${Number(collectionData.floor_price_change_30d ?? 0).toFixed(
-            3
-          )} Ξ`,
-        },
-      ],
-      riskScore: 0,
-      volume: 0,
-      activity: 0,
-      tooltipInfo:
-        "Tracks recent fluctuations in the collection's lowest available price (floor price) over 24 hours, 7 days, and 30 days. Helpful in understanding short-term price trends.",
-      chart: <MiniFloorPriceChart data={floorPriceData} />,
-    },
-    {
-      title: "Volatility Score",
-      value: `Index: ${collectionData.volatility_index?.toFixed(2) ?? "N/A"}`,
-      details: [
-        {
-          label: "Risk Level",
-          value: collectionData.volatility_risk_level ?? "N/A",
-        },
-      ],
-      icon:
-        collectionData.volatility_risk_level === "Low" ? (
-          <ShieldCheck />
-        ) : collectionData.volatility_risk_level === "Medium" ? (
-          <ShieldQuestion />
-        ) : (
-          <AlertTriangle />
-        ),
-      variant: !collectionData.volatility_risk_level
-        ? "No data"
-        : collectionData.volatility_risk_level === "Low"
-        ? "Secure"
-        : collectionData.volatility_risk_level === "Medium"
-        ? "Caution"
-        : "Dangerous",
-
-      riskScore:
-        collectionData.volatility_risk_level === "Low"
-          ? 1
-          : collectionData.volatility_risk_level === "Medium"
-          ? 2
-          : 3,
-      volume: 0,
-      activity: 0,
-      tooltipInfo:
-        "Volatility measures how much the floor price fluctuates over time. Higher volatility may indicate market instability or speculative activity.",
-    },
-  ];
+  const [cardExplanations, setCardExplanations] = useState<{
+    [key: string]: string;
+  }>({});
+  const [summary, setSummary] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const derivedSafetyScore =
     safetyScore ??
@@ -272,18 +45,125 @@ export function ScannerResults({
       whaleDumpPercent: rugPullAnalysis?.whale_drop_percent,
     });
 
+  const cards = useMemo(
+    () =>
+      generateScanCards({
+        collectionData,
+        rugPullAnalysis,
+        washTradingAnalysis,
+      }),
+    [collectionData, rugPullAnalysis, washTradingAnalysis]
+  );
+
+  useEffect(() => {
+    async function generateSummary() {
+      const scanData: ScanSummaryInput = {
+        collectionData,
+        washTradingAnalysis,
+        rugPullAnalysis,
+        whaleActivityAnalysis: {
+          whaleStats: whaleActivityAnalysis.whaleStats,
+        },
+        safetyScore: derivedSafetyScore,
+      };
+      const result = await fetchScanSummary(scanData);
+      setSummary(result);
+    }
+    generateSummary();
+  }, [
+    collectionData,
+    washTradingAnalysis,
+    rugPullAnalysis,
+    whaleActivityAnalysis.whaleStats,
+    derivedSafetyScore,
+  ]);
+
+  const whaleStats = whaleActivityAnalysis?.whaleStats;
+
+  const explanationCards = useMemo(() => {
+    const base = cards.map((card) => ({
+      title: card.title,
+      details: card.details,
+    }));
+
+    if (whaleStats) {
+      base.push({
+        title: "Whale Stats",
+        details: [
+          { label: "Total Whales", value: whaleStats.totalWhales.toString() },
+          { label: "Total Buys", value: whaleStats.totalBuys.toString() },
+          { label: "Total Sells", value: whaleStats.totalSells.toString() },
+          {
+            label: "Total Transfers",
+            value: whaleStats.totalTransfers.toString(),
+          },
+          { label: "ETH Spent", value: whaleStats.totalEthSpent.toFixed(3) },
+        ],
+      });
+    }
+
+    if (holderDistribution) {
+      base.push({
+        title: "Holder Distribution",
+        details: [
+          { label: "Single NFT", value: holderDistribution["1"].toString() },
+          { label: "2–5 NFTs", value: holderDistribution["2-5"].toString() },
+          { label: "6–10 NFTs", value: holderDistribution["6-10"].toString() },
+          { label: "11+ NFTs", value: holderDistribution["11+"].toString() },
+          {
+            label: "Total Holders",
+            value: (collectionData.owner_count ?? 0).toString(),
+          },
+        ],
+      });
+    }
+
+    return base;
+  }, [cards, whaleStats, holderDistribution, collectionData.owner_count]);
+
+  useEffect(() => {
+    if (!holderDistribution) return;
+
+    async function generateCardExplanations() {
+      const result = await fetchSectionExplanation(
+        explanationCards,
+        contractAddress
+      );
+      setCardExplanations(result);
+    }
+
+    generateCardExplanations();
+  }, [explanationCards, contractAddress, holderDistribution]);
+
+  useEffect(() => {
+    async function loadDistribution() {
+      const data = await fetchHolderDistribution(contractAddress);
+      setHolderDistribution(data);
+    }
+    loadDistribution();
+  }, [contractAddress]);
+
+  const shortenAddress = (address: string) =>
+    `${address.slice(0, 6)}...${address.slice(-4)}`;
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(contractAddress);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
-    <div className="w-full py-8 lg:px-16 xl:px-24 mt-10">
-      <div className="col-span-full bg-card rounded-xl p-6 relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 drop-shadow-lg">
+    <div className="relative w-full py-8 px-3 lg:px-16 xl:px-24">
+      {/* Header + Safety Score */}
+      <div className="flex flex-col bg-card rounded-xl p-6  sm:flex-row items-start sm:items-center justify-between gap-6 drop-shadow-lg">
         <div className="flex w-full sm:w-auto items-center justify-between">
           {collectionData.image_url && (
-            <div className="relative w-32 h-32 rounded-xl overflow-hidden">
+            <div className="relative w-32 h-32 rounded-xl">
               <Image
                 src={collectionData.image_url}
                 alt={collectionData.name || "N/A"}
                 fill
-                priority={true}
-                className="object-cover"
+                priority
+                className="object-cover rounded-xl"
               />
             </div>
           )}
@@ -291,9 +171,9 @@ export function ScannerResults({
             <SafetyScore score={derivedSafetyScore} riskLevel={riskLevel} />
           </div>
         </div>
-        <div className="flex-1 flex-col">
-          <div className="flex-1 flex gap-3">
-            <h2 className="text-2xl font-bold mb-2 text-heading">
+        <div className="flex flex-col w-full">
+          <div className="flex gap-0 mb-4 sm:gap-3 flex-col sm:flex-row">
+            <h2 className="text-2xl font-bold text-heading">
               {collectionData.name}
             </h2>
             <span
@@ -337,13 +217,13 @@ export function ScannerResults({
             </li>
           </ul>
         </div>
-
         <div className="hidden sm:flex flex-col justify-center items-center">
           <SafetyScore score={derivedSafetyScore} riskLevel={riskLevel} />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mt-6">
+      {/* Metric Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mt-6">
         {cards.map((card, index) => (
           <ScanResultCard
             key={index}
@@ -353,33 +233,55 @@ export function ScannerResults({
             icon={card.icon}
             variant={card.variant}
             chart={card.chart}
-            tooltipInfo={card.tooltipInfo}
+            tooltipInfo={cardExplanations[card.title] || card.tooltipInfo}
           />
         ))}
+
         {holderDistribution && (
-          <HolderDistributionChart
-            data={holderDistribution}
-            totalHolders={collectionData.owner_count || 0}
-            contractAddress={contractAddress}
-          />
+          <div className="md:col-span-2 xl:col-span-1">
+            <HolderDistributionChart
+              data={holderDistribution}
+              totalHolders={collectionData.owner_count || 0}
+              contractAddress={contractAddress}
+              tooltipInfo={
+                cardExplanations["Holder Distribution"] ||
+                "Loading AI explanation..."
+              }
+            />
+          </div>
         )}
+        {/* Whale Stats */}
+        <div className="xl:col-span-2 md:col-span-2">
+          <WhaleStatsDashboard
+            stats={whaleStats}
+            tooltipInfo={
+              cardExplanations["Whale Stats"] || "Loading AI explanation..."
+            }
+          />
+        </div>
       </div>
 
-      {/* Whale Stats Card */}
-      {whaleActivityAnalysis && (
-        <WhaleStatsDashboard stats={whaleActivityAnalysis.whaleStats} />
+      {/* AI Summary */}
+      {!summary ? (
+        <LoadingSummaryCardSkeleton />
+      ) : (
+        <AISummary summary={summary} />
       )}
 
-      <ShareOnXButton
-        collectionName={collectionData.name || "N/A"}
-        safetyScore={derivedSafetyScore}
-        riskLevel={riskLevel}
-        washTrading={Number(
-          washTradingAnalysis?.washTradingIndex.toFixed(2) ?? 0
-        )}
-        rugPullRisk={rugPullAnalysis?.risk_level ?? "N/A"}
-        appUrl="https://nftsguard.com"
-      />
+      {/* Share block */}
+      <div className="flex flex-col items-center justify-center mt-6 p-6 gap-3 text-heading">
+        <h3>SHARE</h3>
+        <ShareOnXButton
+          collectionName={collectionData.name || "N/A"}
+          safetyScore={derivedSafetyScore}
+          riskLevel={riskLevel}
+          washTrading={Number(
+            washTradingAnalysis?.washTradingIndex.toFixed(2) ?? 0
+          )}
+          rugPullRisk={rugPullAnalysis?.risk_level ?? "N/A"}
+          appUrl="https://nftsguard.com"
+        />
+      </div>
     </div>
   );
 }

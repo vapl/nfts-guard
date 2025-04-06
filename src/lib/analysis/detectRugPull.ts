@@ -131,7 +131,10 @@ async function detectRugPull(contractAddress: string, days: number = 30) {
   const R = RISK_RULES.rugPull;
   // ✅ 5️⃣ Noteikšana, vai pastāv Rug Pull risks
   let rugPullRisk = "Low";
-  if (
+
+  if (uniqueSellers.size < 3 || uniqueBuyers.size < 3) {
+    rugPullRisk = "Uncertain";
+  } else if (
     whaleDropPercent > R.high.whaleDrop ||
     floor_price_24h < R.high.floorDrop24h ||
     largeTransfers > R.high.largeTransfers ||
@@ -141,7 +144,9 @@ async function detectRugPull(contractAddress: string, days: number = 30) {
   } else if (
     whaleDropPercent > R.medium.whaleDrop ||
     floor_price_7d < R.medium.floorDrop7d ||
-    sellerToBuyerRatio > R.medium.sellerToBuyerRatio
+    sellerToBuyerRatio > R.medium.sellerToBuyerRatio ||
+    uniqueSellers.size < 5 ||
+    uniqueBuyers.size < 5
   ) {
     rugPullRisk = "Medium";
   }

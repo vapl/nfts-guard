@@ -1,7 +1,7 @@
 import { RISK_RULES } from "@/lib/config/riskRulesConfig";
 
 export function calculateSafetyScore(params: {
-  rugPullRiskLevel: "Low" | "Medium" | "High";
+  rugPullRiskLevel: "Low" | "Medium" | "High" | "Uncertain" | "N/A";
   washTradingIndex: number;
   whaleDumpPercent?: number;
   liquidityRatio?: number;

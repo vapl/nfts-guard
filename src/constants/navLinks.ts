@@ -6,5 +6,5 @@ export const getNavLinks = () => [
   // { name: "Marketplaces", href: "#marketplaces" },
   { name: "FAQ", href: "/faq" },
   // { name: "Blog", href: "#blog" },
-  { name: "Contact", href: "/contact" },
+  { name: "Get in touch", href: "/contact" },
 ];

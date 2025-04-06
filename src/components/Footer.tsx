@@ -23,7 +23,9 @@ const Footer = () => {
         <div className="w-full flex flex-col lg:flex-row justify-between gap-6 items-center lg:gap-12">
           {/* 🔹 Logo */}
           <div className="flex items-center gap-2">
-            <Logo textSize={20} size={40} label={false} />
+            <Link href="/">
+              <Logo textSize={20} size={40} label={false} />
+            </Link>
           </div>
 
           {/* 🔹 Navigācijas linki */}

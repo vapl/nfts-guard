@@ -24,7 +24,7 @@ export const MiniFloorPriceChart: React.FC<MiniFloorPriceChartProps> = ({
 }) => {
   return (
     <div className="w-full h-32 mt-4 mx-auto">
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height="100%" className={"text-xs"}>
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="#333" />
           <XAxis dataKey="time" stroke="#aaa" />

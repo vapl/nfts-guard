@@ -17,10 +17,12 @@ export default function LandingPageLayout({
 }>) {
   return (
     <>
-      <NetworkEffect />
-      <Navbar />
-      {children}
-      <Footer />
+      <div className="mx-auto w-full max-w-[2160px]">
+        <NetworkEffect />
+        <Navbar />
+        {children}
+        <Footer />
+      </div>
     </>
   );
 }

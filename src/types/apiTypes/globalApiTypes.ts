@@ -158,7 +158,7 @@ export interface WashTradingResult {
 }
 
 export interface RugPullResult {
-  risk_level: "Low" | "Medium" | "High";
+  risk_level: "Low" | "Medium" | "High" | "Uncertain" | "N/A";
   whale_drop_percent: number;
   large_transfers: number;
   floor_price_24h: number;

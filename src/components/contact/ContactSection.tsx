@@ -83,8 +83,8 @@ export default function ContactSection() {
         </p>
       </div>
 
-      <div className="flex flex-col gap-6 w-full max-w-4xl">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="flex flex-col gap-3 w-full max-w-4xl">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <Input
             name="name"
             type="text"

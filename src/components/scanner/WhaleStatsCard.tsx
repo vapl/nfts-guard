@@ -18,12 +18,14 @@ import TooltipInfo from "../tooltips/TooltipInfo";
 
 interface WhaleStatsDashboardProps {
   stats: WhaleStats;
+  tooltipInfo?: string;
 }
 
 const COLORS = ["#8b5cf6", "#f43f5e", "#22d3ee", "#f59e0b"];
 
 export const WhaleStatsDashboard: React.FC<WhaleStatsDashboardProps> = ({
   stats,
+  tooltipInfo,
 }) => {
   const pieData = Object.entries(stats.typeCounts || {}).map(
     ([type, count]) => ({
@@ -47,13 +49,13 @@ export const WhaleStatsDashboard: React.FC<WhaleStatsDashboardProps> = ({
   }, [stats]);
 
   return (
-    <div className="bg-card p-6 rounded-2xl mt-6 drop-shadow-lg">
+    <div className="relative bg-card p-6 rounded-2xl drop-shadow-lg">
       <div className="flex-1 flex gap-3">
         <h4 className="text-paragraph text-sm mb-1">
           Whale Statistics Overview
         </h4>
 
-        <TooltipInfo content="This section provides a summary of trading activity by high-value NFT holders ('whales').It includes total buys, sells, transfers, ETH spent, average holding days, and portfolio volatility. Understanding whale behavior helps assess collection stability, accumulation patterns, and potential risks of price manipulation." />
+        <TooltipInfo content={tooltipInfo} />
       </div>
       <div className="text-2xl font-bold text-heading">
         Total{" "}
@@ -67,52 +69,64 @@ export const WhaleStatsDashboard: React.FC<WhaleStatsDashboardProps> = ({
 
       <ul className="flex flex-wrap mt-4 text-paragraph gap-5">
         <li className="flex flex-col justify-end">
-          <span className="text-xs">Total Buys</span>
-          <span className="text-md text-paragraph font-semibold">
+          <span className="flex text-xs text-wrap pb-0.5 border-b-1 min-h-10 items-end border-gray-600">
+            Total Buys
+          </span>
+          <span className="text-md text-paragraph font-semibold text-nowrap">
             {stats.totalBuys || "N/A"}
           </span>
         </li>
         <li className="flex flex-col justify-end">
-          <span className="text-xs text-nowrap">Total Sells</span>
-          <span className="text-md text-paragraph font-semibold">
+          <span className="flex text-xs text-wrap pb-0.5 border-b-1 min-h-10 items-end border-gray-600">
+            Total Sells
+          </span>
+          <span className="text-md text-paragraph font-semibold text-nowrap">
             {stats.totalSells || "N/A"}
           </span>
         </li>
         <li className="flex flex-col justify-end">
-          <span className="text-xs text-nowrap">Total Transfers:</span>
-          <span className="text-md text-paragraph font-semibold">
+          <span className="flex text-xs text-wrap pb-0.5 border-b-1 min-h-10 items-end border-gray-600">
+            Total Transfers:
+          </span>
+          <span className="text-md text-paragraph font-semibold text-nowrap">
             {stats.totalTransfers || "N/A"}
           </span>
         </li>
         <li className="flex flex-col justify-end">
-          <span className="text-xs text-nowrap">Total ETH Spent:</span>
-          <span className="text-md text-paragraph font-semibold">
+          <span className="flex text-xs text-wrap pb-0.5 border-b-1 min-h-10 items-end border-gray-600">
+            Total ETH Spent:
+          </span>
+          <span className="text-md text-paragraph font-semibold text-nowrap">
             {stats.totalEthSpent.toFixed(3) || "N/A"}
           </span>
         </li>
         <li className="flex flex-col justify-end">
-          <span className="text-xs text-nowrap">Avg. Hold Days:</span>
-          <span className="text-md text-paragraph font-semibold">
+          <span className="flex text-xs text-wrap pb-0.5 border-b-1 min-h-10 items-end border-gray-600">
+            Avg. Hold Days:
+          </span>
+          <span className="text-md text-paragraph font-semibold text-nowrap">
             {stats.avgHoldTime || "N/A"}
           </span>
         </li>
         <li className="flex flex-col justify-end">
-          <span className="text-xs text-nowrap">Avg. Volatility:</span>
-          <span className="text-md text-paragraph font-semibold">
+          <span className="flex text-xs text-wrap pb-0.5 border-b-1 min-h-10 items-end border-gray-600">
+            Avg. Volatility:
+          </span>
+          <span className="text-md text-paragraph font-semibold text-nowrap">
             {stats.avgVolatility.toFixed(3) || "N/A"}
           </span>
         </li>
       </ul>
 
       {/* Charts */}
-      <div className="flex flex-col lg:flex-row gap-6 mt-6">
+      <div className="flex flex-col md:flex-row gap-3 mt-6 h-full">
         {pieData.length > 0 && (
-          <div className="w-full lg:w-3/5 bg-card p-6 rounded-2xl border border-gray-400">
+          <div className="w-full md:w-2/5 bg-card p-6 rounded-2xl border border-gray-400 dark:border-gray-600">
             <h4 className="text-sm font-semibold mb-4">
               Whale Type Distribution
             </h4>
-            <div className="flex flex-col sm:flex-row items-center justify-center">
-              <ResponsiveContainer width="80%" height={200}>
+            <div className="flex flex-col items-center justify-center">
+              <ResponsiveContainer width="100%" height={180}>
                 <PieChart>
                   <Pie
                     data={pieData}
@@ -121,7 +135,7 @@ export const WhaleStatsDashboard: React.FC<WhaleStatsDashboardProps> = ({
                     cx="50%"
                     cy="50%"
                     outerRadius={80}
-                    labelLine={false}
+                    labelLine={true}
                     label={false}
                   >
                     {pieData.map((_, index) => (
@@ -133,7 +147,7 @@ export const WhaleStatsDashboard: React.FC<WhaleStatsDashboardProps> = ({
                   </Pie>
                 </PieChart>
               </ResponsiveContainer>
-              <div className="mt-4 space-y-1 text-sm">
+              <div className="mt-4 space-y-1 text-xs">
                 {pieData.map((entry, index) => (
                   <div key={entry.name} className="flex items-center gap-2">
                     <div
@@ -155,15 +169,15 @@ export const WhaleStatsDashboard: React.FC<WhaleStatsDashboardProps> = ({
         )}
 
         {timeSeriesData.length > 0 && (
-          <div className="w-full lg:w-4/5 border border-gray-400  p-6 rounded-2xl">
+          <div className="flex flex-col gap-8 w-full md:w-4/5 border border-gray-400 dark:border-gray-600 p-6 rounded-2xl">
             <h4 className="text-sm font-semibold mb-4">
               ETH Spending Over Time
             </h4>
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={200} className="text-xs">
               <LineChart data={timeSeriesData}>
-                <CartesianGrid stroke="rgb(var(--text-paragraph))" />
-                <XAxis dataKey="date" stroke="rgb(var(--text-paragraph))" />
-                <YAxis stroke="rgb(var(--text-paragraph))" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#aaa" />
+                <XAxis dataKey="date" stroke="#aaa" />
+                <YAxis stroke="#aaa" />
                 <Tooltip />
                 <Line
                   type="monotone"

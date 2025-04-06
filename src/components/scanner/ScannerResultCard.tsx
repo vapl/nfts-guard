@@ -20,7 +20,7 @@ export function ScanResultCard({
   return (
     <>
       <div
-        className={`bg-card rounded-xl p-6 drop-shadow-lg border
+        className={`relative bg-card rounded-xl p-6 drop-shadow-lg border
     ]`}
         style={{
           borderColor:
@@ -39,7 +39,7 @@ export function ScanResultCard({
             </div>
             <div className="text-2xl font-bold text-heading">{value}</div>
           </div>
-          <div className="flex flex-col justify-center items-center">
+          <div className="flex flex-col justify-between items-center">
             {icon && (
               <div
                 className="mb-2 text-accent-purple h-6"
@@ -95,11 +95,13 @@ export function ScanResultCard({
           />
         )}
         {details && (
-          <ul className="flex mt-4 text-paragraph gap-5">
+          <ul className="flex mt-4 text-paragraph gap-6">
             {details.map((d, idx) => (
-              <li key={idx} className="flex flex-col">
-                <span className="text-xs">{d.label}</span>
-                <span className="text-md text-paragraph font-semibold">
+              <li key={idx} className="flex flex-col text-wrap">
+                <span className="flex text-xs text-wrap pb-0.5 border-b-1 min-h-10 items-end border-gray-600">
+                  {d.label}
+                </span>
+                <span className="text-md text-paragraph font-semibold text-nowrap">
                   {d.value}
                 </span>
               </li>
