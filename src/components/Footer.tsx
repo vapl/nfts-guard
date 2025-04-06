@@ -31,16 +31,11 @@ const Footer = () => {
           {/* 🔹 Navigācijas linki */}
           <ul className="flex flex-wrap justify-center gap-6">
             {navLinks.map((link) => {
-              const isActive = pathname === link.href;
               return (
                 <li key={link.name}>
                   <Link
                     href={link.href}
-                    className={`text-md md:text-lg transition hover:text-purple-400 hover:underline underline-offset-8 ${
-                      isActive
-                        ? "text-purple-500 underline underline-offset-8"
-                        : ""
-                    }`}
+                    className={`text-md md:text-lg transition hover:text-purple-400 hover:underline underline-offset-8`}
                   >
                     {link.name}
                   </Link>

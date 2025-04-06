@@ -384,9 +384,9 @@ export default function Terms() {
               <h2 className="text-3xl font-semibold text-heading">
                 {section.title}
               </h2>
-              <p className="text-lg text-justify text-pargraph">
+              <div className="text-lg text-justify text-pargraph">
                 {section.content}
-              </p>
+              </div>
             </section>
           ))}
         </div>
