@@ -14,6 +14,7 @@ import ScrollToTop from "@/components/ui/ScrollToTop";
 import { useRouter } from "next/navigation";
 import { benefits } from "@/components/sections/benefits";
 import BenefitsCarousel from "@/components/BenefitsCarousel";
+import { faqData } from "@/components/FaqSection";
 
 const steps = [
   {
@@ -207,7 +208,28 @@ export default function HeroSection() {
           }}
         />
       </section>
+      {/* Structured Data for FAQ */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: faqData.flatMap((group) =>
+              group.questions.map((q) => ({
+                "@type": "Question",
+                name: q.question,
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: q.answer,
+                },
+              }))
+            ),
+          }),
+        }}
+      />
 
+      {/* FAQ Section */}
       <FAQSection />
 
       <NewsletterSection

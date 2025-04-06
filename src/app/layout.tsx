@@ -56,6 +56,7 @@ export default async function RootLayout({ children, params }: LayoutProps) {
             `,
           }}
         />
+        <link rel="canonical" href="https://nftsguard.com/" />
       </head>
 
       <body className="min-h-screen bg-page-gradient transition-colors duration-300">

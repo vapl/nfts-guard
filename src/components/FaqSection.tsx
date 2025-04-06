@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { FaChevronDown } from "react-icons/fa";
 
-const faqData = [
+export const faqData = [
   {
     questions: [
       {
@@ -102,7 +102,7 @@ export default function FAQSection() {
   };
 
   return (
-    <section className="relative w-full px-4 lg:px-16 xl:px-24 text-center pt-48">
+    <section className="relative w-full  px-4 lg:px-16 xl:px-24 text-center pt-36">
       <span className="bg-purple-700 bg-opacity-20 text-white text-sm px-4 py-1 rounded-full uppercase tracking-wider">
         FAQ
       </span>
