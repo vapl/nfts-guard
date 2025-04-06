@@ -1,6 +1,6 @@
 export const getNavLinks = () => [
   { name: "Home", href: "/" },
-  { name: "Scanner (beta)", href: "scanner" },
+  { name: "Scanner (beta)", href: "/scanner" },
   // { name: "About", href: "#about" },
   // { name: "Prices", href: "#prices" },
   // { name: "Marketplaces", href: "#marketplaces" },

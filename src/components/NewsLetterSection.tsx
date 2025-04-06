@@ -57,7 +57,7 @@ const NewsletterSection: React.FC<NewsletterProps> = ({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, source: "landing_page" }),
       });
 
       const result = await response.json();

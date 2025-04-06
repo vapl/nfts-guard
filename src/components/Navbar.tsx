@@ -9,6 +9,7 @@ import Button from "@/components/ui/Button";
 import ThemeToggle from "./ThemeToggle";
 import Link from "next/link";
 import Badge from "./ui/Badge";
+import { usePathname } from "next/navigation";
 
 export default function Navbar() {
   const navLinks = getNavLinks();
@@ -18,6 +19,22 @@ export default function Navbar() {
   const [isHovered, setIsHovered] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const sideBarRef = useRef<HTMLDivElement>(null);
+
+  const pathname = usePathname();
+  const normalizePath = (path: string) => {
+    const cleaned = path.replace(/^\/(en|lv)/, "") || "/";
+    return cleaned.endsWith("/") && cleaned.length > 1
+      ? cleaned.slice(0, -1)
+      : cleaned;
+  };
+
+  const isActive = (href: string) => {
+    return normalizePath(pathname || "") === href;
+  };
+
+  const isActiveLink = (href: string) => {
+    return isActive(href) ? "text-purple-500 underline underline-offset-8" : "";
+  };
 
   const handleClickOutside = (event: MouseEvent | TouchEvent) => {
     if (
@@ -83,16 +100,20 @@ export default function Navbar() {
 
         {/* Navigācija */}
         <ul className="hidden lg:flex space-x-8">
-          {navLinks.map((link) => (
-            <li key={link.name}>
-              <a
-                href={link.href}
-                className="text-lg text-paragraph hover:text-primary transition duration-300"
-              >
-                {link.name}
-              </a>
-            </li>
-          ))}
+          {navLinks.map((link) => {
+            return (
+              <li key={link.name}>
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  className={`text-lg text-paragraph hover:text-purple-400 hover:underline underline-offset-8 transition duration-300
+                  ${isActiveLink(link.href)}`}
+                >
+                  {link.name}
+                </Link>
+              </li>
+            );
+          })}
         </ul>
         <div className="flex gap-6">
           {/* Hamburger ikona */}
@@ -141,13 +162,15 @@ export default function Navbar() {
           <ul className="flex flex-col items-center space-y-6 mt-16">
             {navLinks.map((link) => (
               <li key={link.name}>
-                <a
+                <Link
+                  key={link.name}
                   href={link.href}
-                  className="block hover:text-primary transition duration-300"
+                  className={`block hover:text-primary hover:text-purple-400 hover:underline underline-offset-8 transition duration-300 
+                    ${isActiveLink(link.href)}`}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {link.name}
-                </a>
+                </Link>
               </li>
             ))}
           </ul>
