@@ -6,6 +6,7 @@ import { getNFTCollectionOwners } from "@/lib/reservoir/getReservoirOwners";
 import { detectRugPull } from "@/lib//analysis/detectRugPull";
 import { getNFTWhaleActivity } from "@/lib/analysis/analysisWhaleActivity";
 import { calculateSafetyScore } from "./analysis/calculateSafetyScore";
+import { NFTScanResult } from "@/types/apiTypes/globalApiTypes";
 
 /**
  * ✅ Fetches and stores all NFT-related data for a given contract address
@@ -13,11 +14,7 @@ import { calculateSafetyScore } from "./analysis/calculateSafetyScore";
 export async function fetchAndAnalyzeNFTData(
   contractAddress: string,
   timePeriod: 1 | 7 | 30 | 90 | 365
-) {
-  console.log(
-    `🚀 Starting full data fetch and analysis for contract: ${contractAddress}`
-  );
-
+): Promise<NFTScanResult | null> {
   try {
     // ✅ Validējam timePeriod
     const allowedPeriods = [1, 7, 30, 90, 365] as const;
@@ -75,7 +72,31 @@ export async function fetchAndAnalyzeNFTData(
     const riskLevel =
       safetyScore >= 70 ? "Low" : safetyScore >= 40 ? "Medium" : "High";
 
-    console.log("🎯 All data successfully fetched, stored, and analyzed!");
+    const liquidity = {
+      liquidity_ratio:
+        collectionData.on_sale_count / collectionData.total_supply,
+      score:
+        collectionData.on_sale_count < collectionData.total_supply * 0.3
+          ? 100
+          : 50,
+    };
+
+    const priceData = {
+      floor_price_1d: collectionData.floor_price_change_24h,
+      floor_price_7d: collectionData.floor_price_change_7d,
+      floor_price_30d: collectionData.floor_price_change_30d,
+    };
+
+    const volatility = {
+      riskLevel: collectionData.volatility_risk_level,
+      index: collectionData.volatility_index,
+    };
+
+    const salesStats = {
+      volumeTotal: collectionData.volume_all ?? 0,
+      salesCount: collectionData.sales_count ?? 0,
+    };
+
     return {
       collectionData,
       salesData,
@@ -86,6 +107,10 @@ export async function fetchAndAnalyzeNFTData(
       whaleActivityAnalysis,
       safetyScore,
       riskLevel,
+      liquidity,
+      priceData,
+      volatility,
+      salesStats,
     };
   } catch (error) {
     console.error("❌ Error fetching, storing, or analyzing NFT data:", error);

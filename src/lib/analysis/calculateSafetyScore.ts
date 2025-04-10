@@ -7,9 +7,20 @@ export function calculateSafetyScore(params: {
   liquidityRatio?: number;
   floorDropPercent?: number;
   volatilityRiskLevel?: "Low" | "Medium" | "High";
+  salesCount?: number;
+  uniqueBuyers?: number;
+  uniqueSellers?: number;
 }): number {
-  const score = 100;
   const weights = RISK_RULES.safetyScoreWeights;
+  const score = 100;
+
+  // 🚫 Penalize for insufficient market data
+  const isDataSparse =
+    (params.salesCount ?? 0) === 0 ||
+    (params.uniqueBuyers ?? 0) === 0 ||
+    (params.uniqueSellers ?? 0) === 0;
+
+  const sparseDataPenalty = isDataSparse ? 20 : 0;
 
   // 🧨 Rug pull impact
   const rugPullPenalty =
@@ -33,23 +44,23 @@ export function calculateSafetyScore(params: {
       ? 100 * weights.whaleDump
       : 0;
 
-  // 💧 Liquidity risk (optional)
+  // 💧 Liquidity risk
   const liquidityPenalty =
-    params.liquidityRatio && params.liquidityRatio > 0.5
-      ? 20
-      : params.liquidityRatio && params.liquidityRatio > 0.3
-      ? 10
+    params.liquidityRatio && params.liquidityRatio < 0.3
+      ? 100 * weights.liquidity
+      : params.liquidityRatio && params.liquidityRatio < 0.5
+      ? 50 * weights.liquidity
       : 0;
 
-  // 📉 Floor price drop (optional)
+  // 📉 Floor price drop
   const floorDropPenalty =
     params.floorDropPercent && params.floorDropPercent < -50
-      ? 20
+      ? 100 * weights.floorPrice
       : params.floorDropPercent && params.floorDropPercent < -25
-      ? 10
+      ? 50 * weights.floorPrice
       : 0;
 
-  // 📊 Volatility risk (optional)
+  // 📊 Volatility risk
   const volatilityPenalty =
     params.volatilityRiskLevel === "High"
       ? 100 * weights.volatility
@@ -63,7 +74,8 @@ export function calculateSafetyScore(params: {
     whaleDumpPenalty +
     liquidityPenalty +
     floorDropPenalty +
-    volatilityPenalty;
+    volatilityPenalty +
+    sparseDataPenalty;
 
   return Math.max(0, Math.min(100, score - totalPenalty));
 }

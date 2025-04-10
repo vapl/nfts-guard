@@ -125,22 +125,6 @@ export interface GetNFTWhaleActivityResult {
   whaleStats: WhaleStats;
 }
 
-// export interface CollectionDataProps {
-//   name: string;
-//   image_url?: string;
-//   owner_count: number;
-//   floor_price: number;
-//   volume_7day: number;
-//   total_supply: number;
-//   on_sale_count: number;
-//   top_bid: number;
-//   volume_all: number;
-//   sales_count: number;
-//   floor_price_change_24h: number;
-//   floor_price_change_7d: number;
-//   floor_price_change_30d: number;
-// }
-
 export interface WashTradingResult {
   washTradingIndex: number;
   suspiciousSalesCount: number;
@@ -204,3 +188,38 @@ export interface ScanResultCardProps {
   chart?: React.ReactNode;
   tooltipInfo?: string;
 }
+
+export type NFTScanResult = {
+  collectionData: CollectionDataProps;
+  salesData: NFTTransactionProps[];
+  transferData: NFTTransferProps[];
+  ownersData: NFTCollectionOwnerProps[];
+  washTradingAnalysis: WashTradingResult;
+  rugPullAnalysis: RugPullResult;
+  whaleActivityAnalysis: {
+    whaleStats: WhaleStats;
+  };
+  safetyScore: number;
+  riskLevel: "Low" | "Medium" | "High";
+
+  liquidity: {
+    liquidity_ratio: number;
+    score: number;
+  };
+
+  priceData: {
+    floor_price_1d: number;
+    floor_price_7d: number;
+    floor_price_30d: number;
+  };
+
+  volatility: {
+    riskLevel: "Low" | "Medium" | "High";
+    index: number;
+  };
+
+  salesStats: {
+    volumeTotal: number;
+    salesCount: number;
+  };
+};

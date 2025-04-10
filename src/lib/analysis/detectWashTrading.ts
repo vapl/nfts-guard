@@ -26,9 +26,16 @@ async function detectWashTrading(contractAddress: string, days: number = 30) {
       suspiciousSalesCount: 0,
       analysis:
         "Not enough trading activity to assess wash trading risk accurately.",
-      details: {},
+      details: {
+        totalSales: 0,
+        sameWalletTrades: 0,
+        quickSwapTrades: 0,
+        frequentSales: 0,
+        sameWalletTradesPercent: "0%",
+        quickSwapTradesPercent: "0%",
+        frequentSalesPercent: "0%",
+      },
       topWallets: [],
-      // Optionally add: uncertain: true
     };
   }
 
@@ -37,7 +44,15 @@ async function detectWashTrading(contractAddress: string, days: number = 30) {
       washTradingIndex: 0,
       suspiciousSalesCount: 0,
       analysis: "Too few transactions to assess wash trading accurately.",
-      details: {},
+      details: {
+        totalSales: sales.length,
+        sameWalletTrades: 0,
+        quickSwapTrades: 0,
+        frequentSales: 0,
+        sameWalletTradesPercent: "0%",
+        quickSwapTradesPercent: "0%",
+        frequentSalesPercent: "0%",
+      },
       topWallets: [],
     };
   }

@@ -24,11 +24,11 @@ export const RISK_RULES = {
   },
 
   safetyScoreWeights: {
-    rugPull: 0.4,
-    washTrading: 0.4,
-    whaleDump: 0.2,
+    rugPull: 0.3,
+    washTrading: 0.3,
+    whaleDump: 0.15,
     liquidity: 0.1,
     floorPrice: 0.05,
-    volatility: 0.1, // 👈 jaunais volatility svars
+    volatility: 0.1,
   },
 };

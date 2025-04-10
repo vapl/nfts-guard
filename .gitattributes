@@ -1,5 +1,5 @@
 # Nodrošina, ka visi teksta faili tiek glabāti kā LF, neatkarīgi no OS
-* text=auto
+* text=auto eol=lf
 *.js text eol=lf
 *.ts text eol=lf
 *.tsx text eol=lf

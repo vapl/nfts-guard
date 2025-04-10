@@ -1,5 +1,6 @@
 import { NFTCollectionOwnerProps } from "@/types/apiTypes/globalApiTypes";
 import { HolderDistribution } from "@/types/apiTypes/holderDistribution";
+import { HolderRiskMetrics } from "@/types/apiTypes/scanSummary";
 
 export function generateHolderDistributionData(
   owners: NFTCollectionOwnerProps[]
@@ -20,4 +21,26 @@ export function generateHolderDistributionData(
   }
 
   return result;
+}
+
+export function generateHolderRiskMetrics(
+  owners: NFTCollectionOwnerProps[]
+): HolderRiskMetrics {
+  const totalOwners = owners.length;
+  const whales = owners.filter((o) => o.is_whale).length;
+  const whalesPercent = totalOwners === 0 ? 0 : (whales / totalOwners) * 100;
+
+  const ownershipTop10 = owners
+    .sort((a, b) => b.token_count - a.token_count)
+    .slice(0, 10)
+    .reduce((sum, o) => sum + o.token_count, 0);
+
+  const totalTokens = owners.reduce((sum, o) => sum + o.token_count, 0);
+  const decentralizationScore =
+    totalTokens === 0 ? 100 : 100 - (ownershipTop10 / totalTokens) * 100;
+
+  return {
+    whalesPercent: parseFloat(whalesPercent.toFixed(2)),
+    decentralizationScore: parseFloat(decentralizationScore.toFixed(2)),
+  };
 }
