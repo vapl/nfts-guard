@@ -1,84 +1,166 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
+import { supabase } from "@/lib/supabase/supabase";
+import { getClientInfo } from "@/utils/getClientInfo";
 
-export interface Result {
-  id: string;
-  name: string;
-  tokenId: string;
-  contract: string;
-  image?: string;
-  currentPrice: number;
-  lastSale: number;
-  collectionFloor: number;
-  rarityRank: number;
-  totalSupply: number;
-  safetyScore: number;
+interface ScanLimiterContextType {
+  scansLeft: number | null;
+  emailRequired: boolean;
+  hasScannedOnce: boolean;
+  resetTime: number | null;
+  emailUnverified: boolean;
+  setHasScannedOnce: (v: boolean) => void;
+  checkScanAllowed: () => Promise<{
+    allowed: boolean;
+    emailRequired: boolean;
+    emailUnverified: boolean;
+  }>;
 }
 
-interface ScanContextType {
-  results: Result[];
-  isLoading: boolean;
-  error: string | null;
-  scanNFT: (input: string) => Promise<void>;
-  clearResults: () => void;
-}
+const ScanLimiterContext = createContext<ScanLimiterContextType | undefined>(
+  undefined
+);
 
-const ScanContext = createContext<ScanContextType | undefined>(undefined);
-
-export const ScanProvider = ({ children }: { children: React.ReactNode }) => {
-  const [results, setResults] = useState<Result[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Mock NFT scan function
-  const scanNFT = async (input: string) => {
-    setIsLoading(true);
-    setError(null);
-
-    // Simulē skenēšanu (mock API)
-    setTimeout(() => {
-      if (input.trim()) {
-        setResults([
-          {
-            id: "1",
-            name: "CryptoPunk",
-            tokenId: "1234",
-            contract: input,
-            image: "/images/CryptoPunks.webp",
-            currentPrice: 100,
-            lastSale: 90,
-            collectionFloor: 80,
-            rarityRank: 1,
-            totalSupply: 10000,
-            safetyScore: 95,
-          },
-        ]);
-      } else {
-        setError("Invalid contract address or token ID.");
-      }
-      setIsLoading(false);
-    }, 1500);
-  };
-
-  const clearResults = () => {
-    setResults([]);
-    setError(null);
-  };
-
-  return (
-    <ScanContext.Provider
-      value={{ results, isLoading, error, scanNFT, clearResults }}
-    >
-      {children}
-    </ScanContext.Provider>
-  );
+export const useScanLimiterContext = () => {
+  const context = useContext(ScanLimiterContext);
+  if (!context) throw new Error("Must be used within ScanLimiterProvider");
+  return context;
 };
 
-export const useScan = () => {
-  const context = useContext(ScanContext);
-  if (!context) {
-    throw new Error("useScan must be used within a ScanProvider");
-  }
-  return context;
+export const ScanLimiterProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
+  const [scansLeft, setScansLeft] = useState<number | null>(null);
+  const [emailRequired, setEmailRequired] = useState<boolean>(false);
+  const [resetTime, setResetTime] = useState<number | null>(null);
+  const [hasScannedOnce, setHasScannedOnceState] = useState<boolean>(false);
+  const [emailUnverified, setEmailUnverified] = useState<boolean>(false);
+
+  const setHasScannedOnce = (value: boolean) => {
+    setHasScannedOnceState(value);
+  };
+
+  const checkScanAllowed = useCallback(async (): Promise<{
+    allowed: boolean;
+    emailRequired: boolean;
+    emailUnverified: boolean;
+  }> => {
+    try {
+      const { ip, fingerprint, userAgent } = await getClientInfo();
+
+      let email: string | null = null;
+      let emailIsVerified = false;
+
+      const { data: usage } = await supabase
+        .from("scan_usage")
+        .select("email, last_scan_at")
+        .eq("ip_address", ip)
+        .maybeSingle();
+
+      if (usage?.last_scan_at) {
+        const lastScan = new Date(usage.last_scan_at);
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        if (lastScan >= todayStart) setHasScannedOnce(true);
+      }
+
+      if (usage?.email) {
+        email = usage.email;
+        const { data: subscriber } = await supabase
+          .from("subscribers")
+          .select("is_verified")
+          .eq("email", usage.email)
+          .maybeSingle();
+
+        if (subscriber?.is_verified) {
+          emailIsVerified = true;
+          setEmailUnverified(false);
+        } else {
+          emailIsVerified = false;
+          setEmailUnverified(true);
+        }
+      } else {
+        email = null;
+        emailIsVerified = false;
+        setEmailUnverified(false); // <- ļoti svarīgi: nav e-pasta ≠ nav apstiprināts
+      }
+
+      const res = await fetch("/api/scan-limit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, ip, fingerprint, userAgent }),
+      });
+
+      const data = await res.json();
+
+      setScansLeft(Math.max(data.scansLeft ?? 0, 0));
+      setResetTime(data.resetTime ?? null);
+
+      if (!emailIsVerified) {
+        const { data: usageData } = await supabase
+          .from("scan_usage")
+          .select("scans_today, email")
+          .eq("ip_address", ip)
+          .maybeSingle();
+
+        const scansToday = usageData?.scans_today ?? 0;
+        const hasUsedOnce = scansToday > 0;
+        const hasEmail = !!usageData?.email;
+
+        setEmailRequired(true);
+        setEmailUnverified(hasEmail);
+
+        return {
+          allowed: hasEmail ? false : !hasUsedOnce,
+          emailRequired: true,
+          emailUnverified: hasEmail,
+        };
+      }
+
+      setEmailRequired(false);
+      setEmailUnverified(false);
+
+      return {
+        allowed: data.allowed,
+        emailRequired: false,
+        emailUnverified: false,
+      };
+    } catch (error) {
+      console.error("Scan limiter error:", error);
+      return {
+        allowed: false,
+        emailRequired: false,
+        emailUnverified: false,
+      };
+    }
+  }, []);
+
+  useEffect(() => {
+    checkScanAllowed();
+  }, [checkScanAllowed]);
+
+  return (
+    <ScanLimiterContext.Provider
+      value={{
+        scansLeft,
+        emailRequired,
+        emailUnverified,
+        hasScannedOnce,
+        resetTime,
+        setHasScannedOnce,
+        checkScanAllowed,
+      }}
+    >
+      {children}
+    </ScanLimiterContext.Provider>
+  );
 };

@@ -52,7 +52,7 @@ const NewsletterSection: React.FC<NewsletterProps> = ({
     }
 
     try {
-      const response = await fetch("/api/subscribeEmail", {
+      const response = await fetch("/api/subscribe", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

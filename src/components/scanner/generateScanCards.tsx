@@ -100,7 +100,10 @@ export function generateScanCards({
         },
       ],
       icon:
-        washTradingAnalysis?.washTradingIndex > 50 ? (
+        washTradingAnalysis?.analysis?.includes("Not enough") ||
+        washTradingAnalysis?.analysis?.includes("Too few") ? (
+          <ShieldQuestion />
+        ) : washTradingAnalysis?.washTradingIndex > 50 ? (
           <AlertTriangle />
         ) : washTradingAnalysis?.washTradingIndex > 20 ? (
           <ShieldQuestion />
@@ -108,12 +111,21 @@ export function generateScanCards({
           <ShieldCheck />
         ),
       variant:
-        washTradingAnalysis?.washTradingIndex > 50
+        washTradingAnalysis?.analysis?.includes("Not enough") ||
+        washTradingAnalysis?.analysis?.includes("Too few")
+          ? "Neutral"
+          : washTradingAnalysis?.washTradingIndex > 50
           ? "Dangerous"
           : washTradingAnalysis?.washTradingIndex > 20
           ? "Suspicious"
           : "Secure",
-      riskScore: washTradingAnalysis?.washTradingIndex < 1 ? 1 : 2,
+      riskScore:
+        washTradingAnalysis?.analysis?.includes("Not enough") ||
+        washTradingAnalysis?.analysis?.includes("Too few")
+          ? 0
+          : washTradingAnalysis?.washTradingIndex < 1
+          ? 1
+          : 2,
       volume: 0,
       activity: 0,
       tooltipInfo:

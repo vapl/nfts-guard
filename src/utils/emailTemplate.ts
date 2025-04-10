@@ -305,6 +305,15 @@ export const generateSubscribeEmailContent = () => {
           If you didn’t sign up, feel free to ignore this email.<br />— NFTs
           Guard Team
         </p>
+        <p
+          style="
+            text-align: center;
+            font-size: 12px;
+            color: #888;
+            margin-top: 10px;
+          "
+        >If you wish to stop receiving emails, you can <a href="https://nftsguard.com/api/unsubscribe?email=user%40domain.com" style="color:#aaa;text-decoration:underline;">unsubscribe here</a>.</p>
+
       </div>
     </div>
   `;

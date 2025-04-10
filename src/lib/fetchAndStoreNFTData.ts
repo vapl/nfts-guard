@@ -50,7 +50,6 @@ export async function fetchAndAnalyzeNFTData(
       contractAddress,
       timePeriod
     );
-    console.log("✅ Wash Trading Analysis Completed:", washTradingAnalysis);
 
     // ✅ 6️⃣ Izsauc Rug Pull analīzi
     const rugPullAnalysis = await detectRugPull(contractAddress, timePeriod);

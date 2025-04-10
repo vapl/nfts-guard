@@ -40,25 +40,33 @@ export function validateInput(
   }
 }
 
-type InputType = "email" | "password" | "address";
-
 export function getValidationError(
-  type: InputType,
+  type: "email" | "password" | "address",
   value: string,
   chain?: string,
   required: boolean = true
 ): string | null {
-  if (required && !value.trim()) return null; // No error if not required
   const trimmed = value.trim();
+
+  if (required && !trimmed) {
+    switch (type) {
+      case "email":
+        return "Email is required.";
+      case "password":
+        return "Password is required.";
+      case "address":
+        return "Contract address is required.";
+      default:
+        return "This field is required.";
+    }
+  }
 
   switch (type) {
     case "email":
-      if (!trimmed) return "Email is required.";
       if (!validateEmail(trimmed)) return "Please enter a valid email address.";
       return null;
 
     case "password":
-      if (!trimmed) return "Password is required.";
       if (trimmed.length < 8) return "Password must be at least 8 characters.";
       if (!/\d/.test(trimmed))
         return "Password must include at least one number.";
@@ -67,13 +75,12 @@ export function getValidationError(
       return null;
 
     case "address":
-      if (!trimmed) return "Contract address is required.";
       if (!validateAddress(trimmed, chain || "ethereum")) {
         return `Invalid address for selected chain (${chain || "ethereum"}).`;
       }
       return null;
 
     default:
-      return "Invalid input type.";
+      return null;
   }
 }

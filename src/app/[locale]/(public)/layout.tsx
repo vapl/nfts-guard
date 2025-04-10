@@ -19,6 +19,7 @@ export default function LandingPageLayout({
     <>
       <div className="mx-auto w-full max-w-[2160px]">
         <NetworkEffect />
+
         <Navbar />
         {children}
         <Footer />

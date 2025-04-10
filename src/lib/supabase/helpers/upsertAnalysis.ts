@@ -18,8 +18,15 @@ export async function upsertAnalysis(
   // Apvieno datus
   const payload = {
     contract_address: contractAddress,
-    summary: updates.summary ?? existing?.summary ?? null,
-    explanations: updates.explanations ?? existing?.explanations ?? null,
+    summary:
+      updates.summary !== undefined
+        ? updates.summary
+        : existing?.summary ?? null,
+    explanations:
+      updates.explanations !== undefined
+        ? updates.explanations
+        : existing?.explanations ?? null,
+
     updated_at: new Date().toISOString(),
   };
 

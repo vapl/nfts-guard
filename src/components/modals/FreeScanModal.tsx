@@ -9,8 +9,8 @@ import ScanResultsFree from "../FreeScanResult";
 interface FreeScanModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onRegister: () => void;
-  onUpgrade: () => void;
+  onRegister?: () => void;
+  onUpgrade?: () => void;
 }
 
 const FreeScanModal: React.FC<FreeScanModalProps> = ({

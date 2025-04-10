@@ -1,7 +1,6 @@
 import "@/app/globals.css";
 import { Michroma, Geist, Geist_Mono } from "next/font/google";
 import { defaultMetadata } from "@/app/metadata";
-import { ScanProvider } from "@/context/ScanContext";
 import { ThemeProvider } from "next-themes";
 
 import { LayoutProps } from "@/types/layout";
@@ -59,13 +58,11 @@ export default async function RootLayout({ children, params }: LayoutProps) {
         <link rel="canonical" href="https://nftsguard.com/" />
       </head>
 
-      <body className="min-h-screen bg-page-gradient transition-colors duration-300">
+      <body className="flex flex-col bg-page-gradient transition-colors duration-300">
         <ThemeProvider attribute="class" enableSystem defaultTheme="system">
-          <ScanProvider>
-            {children}
-            <AnalyticsTracker />
-            <CookieConsent />
-          </ScanProvider>
+          {children}
+          <AnalyticsTracker />
+          <CookieConsent />
         </ThemeProvider>
       </body>
     </html>

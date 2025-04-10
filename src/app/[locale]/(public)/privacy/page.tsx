@@ -158,38 +158,37 @@ const mainContent = [
           At NFTs Guard, we use your data to enhance security, improve platform
           functionality, and comply with regulatory requirements. Below are the
           key ways we utilize the information we collect:
-          <ul className="list-disc ml-6 text-lg text-paragraph mb-6 max-w-full">
-            <li>
-              <strong>NFT Security Risk Analysis</strong> – We analyze
-              blockchain transactions to detect fraudulent activities, such as
-              wash trading and price manipulation, and assess the legitimacy of
-              NFTs.This helps users make informed investment decisions and avoid
-              potential scams.
-            </li>
-            <li>
-              <strong>Improving Platform Functionality</strong> – By analyzing
-              user interactions, performance metrics, and technical data, we
-              optimize website speed, improve UI design, and enhance overall
-              user experience.
-            </li>
-            <li>
-              <strong>Regulatory Compliance</strong> – We may process data to
-              monitor suspicious activities, comply with anti-money laundering
-              (AML) regulations, and respond to legal requests when required.
-            </li>
-            <li>
-              <strong>Fraud Prevention & Security</strong> – We track wallet
-              activity to identify unauthorized access, prevent phishing
-              attacks, and protect users from fraudulent transactions.
-            </li>
-            <li>
-              <strong>Personalized Communication</strong> – We send security
-              alerts, feature updates, and relevant insights based on user
-              preferences. Users can adjust their communication settings at any
-              time.
-            </li>
-          </ul>
         </p>
+        <ul className="list-disc ml-6 text-lg text-paragraph mb-6 max-w-full">
+          <li>
+            <strong>NFT Security Risk Analysis</strong> – We analyze blockchain
+            transactions to detect fraudulent activities, such as wash trading
+            and price manipulation, and assess the legitimacy of NFTs.This helps
+            users make informed investment decisions and avoid potential scams.
+          </li>
+          <li>
+            <strong>Improving Platform Functionality</strong> – By analyzing
+            user interactions, performance metrics, and technical data, we
+            optimize website speed, improve UI design, and enhance overall user
+            experience.
+          </li>
+          <li>
+            <strong>Regulatory Compliance</strong> – We may process data to
+            monitor suspicious activities, comply with anti-money laundering
+            (AML) regulations, and respond to legal requests when required.
+          </li>
+          <li>
+            <strong>Fraud Prevention & Security</strong> – We track wallet
+            activity to identify unauthorized access, prevent phishing attacks,
+            and protect users from fraudulent transactions.
+          </li>
+          <li>
+            <strong>Personalized Communication</strong> – We send security
+            alerts, feature updates, and relevant insights based on user
+            preferences. Users can adjust their communication settings at any
+            time.
+          </li>
+        </ul>
       </>
     ),
   },
@@ -203,28 +202,28 @@ const mainContent = [
           We may share your data with trusted third-party services to enhance
           functionality, ensure security, and improve user experience. These
           include:
-          <ul className="list-disc ml-6 text-lg text-paragraph mb-6 max-w-full">
-            <li>
-              <strong>Blockchain APIs</strong> – We analyze (e.g., Etherscan,
-              Alchemy) – Used for verifying transaction data, analyzing NFT
-              activity, and enhancing security monitoring.
-            </li>
-            <li>
-              <strong>Analytics Providers</strong> – By analyzing user
-              interactions, performance metrics, and technical data, we optimize
-              website speed, improve UI design, and enhance overall user
-              experience.
-            </li>
-            <li>
-              <strong>Regulatory Compliance</strong> – Help us track platform
-              performance, detect unusual activity, and improve user engagement.
-              We only share the necessary data required for these services, and
-              all third parties must adhere to strict security and privacy
-              standards. Your personal data is never sold or shared for
-              advertising purposes.
-            </li>
-          </ul>
         </p>
+        <ul className="list-disc ml-6 text-lg text-paragraph mb-6 max-w-full">
+          <li>
+            <strong>Blockchain APIs</strong> – We analyze (e.g., Etherscan,
+            Alchemy) – Used for verifying transaction data, analyzing NFT
+            activity, and enhancing security monitoring.
+          </li>
+          <li>
+            <strong>Analytics Providers</strong> – By analyzing user
+            interactions, performance metrics, and technical data, we optimize
+            website speed, improve UI design, and enhance overall user
+            experience.
+          </li>
+          <li>
+            <strong>Regulatory Compliance</strong> – Help us track platform
+            performance, detect unusual activity, and improve user engagement.
+            We only share the necessary data required for these services, and
+            all third parties must adhere to strict security and privacy
+            standards. Your personal data is never sold or shared for
+            advertising purposes.
+          </li>
+        </ul>
       </>
     ),
   },

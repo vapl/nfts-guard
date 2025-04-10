@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-// Input
+// Input field
 interface InputProps {
   value: string | number;
   placeholder?: string;
@@ -9,10 +9,12 @@ interface InputProps {
   className?: string;
   disabled?: boolean;
   required?: boolean;
+  autoFocus?: boolean;
   validate?: "email";
   showError?: boolean;
   iconLeft?: React.ReactNode;
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
 }
 
 export const Input: React.FC<InputProps> = ({
@@ -23,21 +25,23 @@ export const Input: React.FC<InputProps> = ({
   className = "",
   disabled = false,
   required = false,
+  autoFocus = false,
   validate,
   showError = false,
   iconLeft = null,
   onChange,
+  onKeyDown,
 }) => {
   const [isValid, setIsValid] = useState<boolean | null>(null);
   const [emptyError, setEmptyError] = useState(false);
 
   useEffect(() => {
-    // Tukšuma pārbaude
+    // Empty field check
     if (required && showError) {
       setEmptyError(value === "" || value === null || value === undefined);
     }
 
-    // Email validācija
+    // Email validation
     if (validate === "email" && typeof value === "string") {
       const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
       setIsValid(emailRegex.test(value));
@@ -59,16 +63,21 @@ export const Input: React.FC<InputProps> = ({
         <input
           type={type}
           name={name}
+          autoFocus={autoFocus}
           placeholder={placeholder}
           value={value}
           disabled={disabled}
           required={required}
+          aria-required={required}
+          aria-invalid={showEmailError || showRequiredError}
           onChange={onChange}
+          onKeyDown={onKeyDown}
           className={`input ${iconLeft ? "!pl-12" : "pl-0"} ${className} ${
             showEmailError || showRequiredError ? "border-red-500" : ""
           }`}
         />
       </div>
+
       {showRequiredError && (
         <span className="text-red-500 text-sm">This field is required</span>
       )}

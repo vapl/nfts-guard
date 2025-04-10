@@ -178,7 +178,7 @@ export const WhaleStatsDashboard: React.FC<WhaleStatsDashboardProps> = ({
                 <CartesianGrid strokeDasharray="3 3" stroke="#aaa" />
                 <XAxis dataKey="date" stroke="#aaa" />
                 <YAxis stroke="#aaa" />
-                <Tooltip />
+                <Tooltip wrapperClassName="bg-card" />
                 <Line
                   type="monotone"
                   dataKey="eth"

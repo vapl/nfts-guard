@@ -3,16 +3,48 @@ const nextConfig = {
   reactStrictMode: true,
 
   images: {
-    domains: [
-      "boredapeyachtclub.com",
-      "larvalabs.com",
-      "opensea.io",
-      "img.reservoir.tools",
-      "i.seadn.io",
-      "res.cloudinary.com",
-      "ipfs.io",
-      "static.reservoir.tools",
-    ], // Pievieno visus NFT attēlu hostus
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "boredapeyachtclub.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "larvalabs.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "opensea.io",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "img.reservoir.tools",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "i.seadn.io",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "ipfs.io",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "static.reservoir.tools",
+        pathname: "/**",
+      },
+    ],
   },
 
   async redirects() {

@@ -83,8 +83,6 @@ export async function getNFTWhaleActivity(
   timePeriod: number
 ): Promise<GetNFTWhaleActivityResult> {
   try {
-    console.log(`🔎 Checking whale activity for contract: ${contractAddress}`);
-
     function generateActivityLog(
       salesData: { timestamp: string; price: number }[]
     ): { date: string; eth: number }[] {
@@ -162,7 +160,7 @@ export async function getNFTWhaleActivity(
       }
 
       salesMap[sale.to_wallet].hold_times.push(holdTime);
-      salesMap[sale.to_wallet].total_eth_spent += (sale.price || 0) / 1e18;
+      salesMap[sale.to_wallet].total_eth_spent += sale.price || 0;
       salesMap[sale.to_wallet].total_usd_spent += sale.usd_price || 0;
       if (sale.price)
         salesMap[sale.to_wallet].price_volatility.push(sale.price);

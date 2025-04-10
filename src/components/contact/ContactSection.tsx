@@ -36,7 +36,7 @@ export default function ContactSection() {
 
     try {
       setIsLoading(true);
-      const response = await fetch("/api/contactEmail", {
+      const response = await fetch("/api/contact-email", {
         method: "POST",
         headers: {
           "Content-Type": "Application/json",
@@ -51,6 +51,7 @@ export default function ContactSection() {
           "Thank you for reaching out — we’ll respond as soon as possible."
         );
         setError(false);
+        setForm({ name: "", email: "", message: "" });
       } else {
         setMessage(
           "We couldn't send your message. Please check your connection and try again."
@@ -121,13 +122,15 @@ export default function ContactSection() {
           className="drop-shadow-lg"
         />
         {message && (
-          <span
-            className={`${
-              !error ? "text-green-500" : "text-red-500"
-            } text-sm self-center`}
+          <div
+            className={`mt-3 px-4 py-2 rounded text-sm ${
+              !error
+                ? "bg-green-500/10 text-green-400"
+                : "bg-red-500/10 text-red-400"
+            }`}
           >
             {message}
-          </span>
+          </div>
         )}
 
         <Button

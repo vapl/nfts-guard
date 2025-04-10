@@ -6,20 +6,29 @@ import { getNFTSales } from "@/lib/reservoir/getReservoirSales";
  * ✅ Detects wash trading with optimized logic and indexed access
  */
 async function detectWashTrading(contractAddress: string, days: number = 30) {
-  console.log(
-    `🔍 Analyzing wash trading for ${contractAddress} over ${days} days`
-  );
-
   const sales = await getNFTSales(contractAddress, days);
 
-  if (!sales.length) {
-    console.warn("⚠️ No sales data found.");
+  // ✅ Ja nav pietiekamu datu vispār
+  const uniqueBuyers = new Set(sales.map((s) => s.to_wallet)).size;
+  const uniqueSellers = new Set(sales.map((s) => s.from_wallet)).size;
+
+  const noActivity =
+    sales.length === 0 ||
+    (uniqueBuyers === 0 && uniqueSellers === 0) ||
+    sales.every(
+      (s) => s.from_wallet === s.to_wallet || !s.price || s.price === 0
+    );
+
+  if (noActivity) {
+    console.warn("⚠️ Not enough activity to assess wash trading.");
     return {
       washTradingIndex: 0,
       suspiciousSalesCount: 0,
-      analysis: "No wash trading detected.",
+      analysis:
+        "Not enough trading activity to assess wash trading risk accurately.",
       details: {},
       topWallets: [],
+      // Optionally add: uncertain: true
     };
   }
 
