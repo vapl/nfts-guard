@@ -58,42 +58,44 @@ export const ScanLimiterProvider = ({
       const { ip, fingerprint, userAgent } = await getClientInfo();
 
       let email: string | null = null;
-      let emailIsVerified = false;
 
+      // Get email and last scan date by IP
       const { data: usage } = await supabase
         .from("scan_usage")
-        .select("email, last_scan_at")
+        .select("email, last_scan_at, free_scan_used")
         .eq("ip_address", ip)
         .maybeSingle();
 
+      // Check if scanned in the last 24h
       if (usage?.last_scan_at) {
         const lastScan = new Date(usage.last_scan_at);
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
-        if (lastScan >= todayStart) setHasScannedOnce(true);
+        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+        if (lastScan >= twentyFourHoursAgo) {
+          setHasScannedOnce(true);
+        }
       }
 
       if (usage?.email) {
         email = usage.email;
+
+        // Optionally set emailUnverified for local state — informative only
         const { data: subscriber } = await supabase
           .from("subscribers")
           .select("is_verified")
           .eq("email", usage.email)
           .maybeSingle();
 
-        if (subscriber?.is_verified) {
-          emailIsVerified = true;
-          setEmailUnverified(false);
-        } else {
-          emailIsVerified = false;
-          setEmailUnverified(true);
-        }
+        setEmailUnverified(!subscriber?.is_verified);
       } else {
-        email = null;
-        emailIsVerified = false;
-        setEmailUnverified(false); // <- ļoti svarīgi: nav e-pasta ≠ nav apstiprināts
+        setEmailUnverified(false); // nav e-pasta ≠ nav jāverificē
       }
 
+      if (!hasScannedOnce && usage?.free_scan_used) {
+        setHasScannedOnce(true);
+      }
+
+      // Ask backend for scan status
       const res = await fetch("/api/scan-limit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -102,37 +104,16 @@ export const ScanLimiterProvider = ({
 
       const data = await res.json();
 
+      // Save state
       setScansLeft(Math.max(data.scansLeft ?? 0, 0));
       setResetTime(data.resetTime ?? null);
-
-      if (!emailIsVerified) {
-        const { data: usageData } = await supabase
-          .from("scan_usage")
-          .select("scans_today, email")
-          .eq("ip_address", ip)
-          .maybeSingle();
-
-        const scansToday = usageData?.scans_today ?? 0;
-        const hasUsedOnce = scansToday > 0;
-        const hasEmail = !!usageData?.email;
-
-        setEmailRequired(true);
-        setEmailUnverified(hasEmail);
-
-        return {
-          allowed: hasEmail ? false : !hasUsedOnce,
-          emailRequired: true,
-          emailUnverified: hasEmail,
-        };
-      }
-
-      setEmailRequired(false);
-      setEmailUnverified(false);
+      setEmailRequired(data.emailRequired);
+      setEmailUnverified(data.emailUnverified);
 
       return {
         allowed: data.allowed,
-        emailRequired: false,
-        emailUnverified: false,
+        emailRequired: data.emailRequired,
+        emailUnverified: data.emailUnverified,
       };
     } catch (error) {
       console.error("Scan limiter error:", error);
@@ -146,7 +127,7 @@ export const ScanLimiterProvider = ({
 
   useEffect(() => {
     checkScanAllowed();
-  }, [checkScanAllowed]);
+  }, []);
 
   return (
     <ScanLimiterContext.Provider

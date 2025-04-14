@@ -3,8 +3,6 @@ import { NFTTransferProps } from "@/types/apiTypes/globalApiTypes";
 
 export async function saveTransfersToSupabase(transfers: NFTTransferProps[]) {
   try {
-    console.log("🔄 Saving transfers transactions to Supabase...");
-
     const { error } = await supabase.from("nft_transfers").upsert(transfers, {
       onConflict: "tx_hash",
       ignoreDuplicates: true,
@@ -16,7 +14,6 @@ export async function saveTransfersToSupabase(transfers: NFTTransferProps[]) {
         error
       );
     } else {
-      console.log("✅ transfers transactions successfully saved to Supabase!");
     }
   } catch (error) {
     console.error("❌ Error in saveTransfersToSupabase:", error);

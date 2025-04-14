@@ -36,7 +36,7 @@ export default function ScannerPage() {
   const [result, setResult] = useState<ScannerResultsProps>();
   const [message, setMessage] = useState<string>("");
   const [messageType, setMessageType] = useState<"success" | "error" | "">("");
-  const debounceQuery = useDebounce(inputValue, 300);
+  const debounceQuery = useDebounce(inputValue.trim(), 250);
   const [suggestions, setSuggestions] = useState<searchSuggestionProps[]>([]);
   const [selectedChain, setSelectedChain] = useState(CHAIN_OPTIONS[0]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -44,7 +44,6 @@ export default function ScannerPage() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const { checkScanAllowed, setHasScannedOnce } = useScanLimiterContext();
-  const [selectedFromSuggestions, setSelectedFromSuggestions] = useState(false);
   const { saveScan } = useSaveScan();
 
   useEffect(() => {
@@ -73,43 +72,88 @@ export default function ScannerPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Caching search to Supabase and retrieving
+  const selectedFromSuggestionsRef = useRef(false);
+
   useEffect(() => {
-    if (selectedFromSuggestions) {
-      setSelectedFromSuggestions(false);
-      return;
-    }
-
-    if (debounceQuery.length < 2) {
-      setSuggestions([]);
-      return;
-    }
-
-    fetch(`/api/search?query=${debounceQuery}`)
-      .then((res) => res.json())
-      .then((data) => {
-        const collections = data.collections || [];
-        const input = debounceQuery.toLowerCase();
-
-        const filtered = collections
-          .filter(
-            (c: searchSuggestionProps) =>
-              c.name?.toLowerCase().includes(input) ||
-              c.symbol?.toLowerCase().includes(input) ||
-              c.collectionId?.toLowerCase().includes(input)
-          )
-          .sort((a, b) => {
-            const aStarts = a.name?.toLowerCase().startsWith(input) ? -1 : 1;
-            const bStarts = b.name?.toLowerCase().startsWith(input) ? -1 : 1;
-            return aStarts - bStarts;
-          });
-
-        setSuggestions(filtered);
-      })
-      .catch((err) => {
-        console.error("Search error:", err);
+    const fetchSuggestions = async () => {
+      if (
+        selectedFromSuggestionsRef.current ||
+        debounceQuery.trim().length < 2
+      ) {
+        selectedFromSuggestionsRef.current = false;
         setSuggestions([]);
-      });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        return;
+      }
+
+      const input = debounceQuery.toLowerCase();
+
+      // 1. Search Supabase cache
+      const { data: cached } = await supabase
+        .from("search_cache_collections")
+        .select("contract_address, name, symbol, image")
+        .ilike("name", `%${input}%`)
+        .limit(30);
+
+      let results: searchSuggestionProps[] = [];
+
+      if (cached && cached.length > 0) {
+        results = cached.map((item) => ({
+          id: item.contract_address,
+          collectionId: item.contract_address, // fallback for type compatibility
+          name: item.name,
+          symbol: item.symbol,
+          image: item.image,
+        }));
+      } else {
+        // 2. Fallback to Reservoir API
+        const res = await fetch(`/api/search?query=${debounceQuery}`);
+        const json = await res.json();
+        const apiResults = json.collections || [];
+
+        results = apiResults.map((item) => ({
+          id: item.id,
+          collectionId: item.id, // fallback for type compatibility
+          name: item.name,
+          symbol: item.symbol,
+          image: item.image,
+        }));
+
+        // 3. Cache in Supabase
+        const insertData = results.map((c) => ({
+          contract_address: c.id,
+          name: c.name,
+          symbol: c.symbol,
+          image: c.image,
+        }));
+
+        if (insertData.length > 0) {
+          const { data: existing } = await supabase
+            .from("search_cache_collections")
+            .select("contract_address")
+            .in(
+              "contract_address",
+              insertData.map((d) => d.contract_address)
+            );
+
+          const existingAddresses = new Set(
+            existing?.map((d) => d.contract_address)
+          );
+
+          const newEntries = insertData.filter(
+            (d) => !existingAddresses.has(d.contract_address)
+          );
+
+          if (newEntries.length > 0) {
+            await supabase.from("search_cache_collections").insert(newEntries);
+          }
+        }
+      }
+
+      setSuggestions(results);
+    };
+
+    fetchSuggestions();
   }, [debounceQuery]);
 
   const clearMessageAfterDelay = () => {
@@ -133,7 +177,8 @@ export default function ScannerPage() {
     } else if (e.key === "Enter") {
       if (selectedIndex >= 0 && suggestions[selectedIndex]) {
         const selected = suggestions[selectedIndex];
-        setContractInput(selected.id);
+        selectedFromSuggestionsRef.current = true;
+        setContractInput(selected.collectionId || selected.id);
         setInputValue(selected.name || "");
         setSuggestions([]);
         setSelectedIndex(-1);
@@ -161,7 +206,6 @@ export default function ScannerPage() {
       contractInput,
       selectedChain.value
     );
-
     if (error) {
       setMessageType("error");
       setMessage(error);
@@ -169,11 +213,8 @@ export default function ScannerPage() {
       return;
     }
 
-    // ✅ Limitu pārbaude
     const result = await checkScanAllowed();
-
     if (result.emailUnverified) {
-      // ✅ Ir ievadīts e-pasts, bet nav verificēts
       setMessageType("error");
       setMessage("Please verify your email.");
       clearMessageAfterDelay();
@@ -182,10 +223,8 @@ export default function ScannerPage() {
 
     if (!result.allowed) {
       if (result.emailRequired && !result.emailUnverified) {
-        // ✅ Sasniegts limits, bet nav apstiprināšanas problēmas
         setShowEmailModal(true);
       } else {
-        // ✅ Sasniegts limits un/vai bez e-pasta
         setMessageType("error");
         setMessage("You have reached your daily scan limit.");
         clearMessageAfterDelay();
@@ -193,7 +232,6 @@ export default function ScannerPage() {
       return;
     }
 
-    // ✅ Atļauts skanēt
     setHasScannedOnce(true);
     setIsLoading(true);
     setResult(undefined);
@@ -202,7 +240,6 @@ export default function ScannerPage() {
 
     try {
       const startTime = Date.now();
-      // ✅ Fetch NFT datus
       const res = await fetch("/api/fetch-nft-data", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -212,9 +249,7 @@ export default function ScannerPage() {
       const data = await res.json();
 
       if (!res.ok || data.error || !data.collectionData) {
-        if (data.error) {
-          console.error("Fetch error:", data.error);
-        }
+        if (data.error) console.error("Fetch error:", data.error);
         setMessageType("error");
         setMessage("NFT collection not found or server error.");
         clearMessageAfterDelay();
@@ -225,10 +260,8 @@ export default function ScannerPage() {
       setContractInput("");
       setInputValue("");
 
-      // ✅ Saglabā skanējumu pēc fetch
       const ip = await fetch("/api/user-ip").then((res) => res.text());
       const email = await getVerifiedEmail();
-
       const duration = Date.now() - startTime;
 
       await saveScan(ip, email, "success", null, contractInput, duration);
@@ -245,7 +278,6 @@ export default function ScannerPage() {
   const handleEmailSubmit = async (email: string) => {
     const { ip, fingerprint, userAgent } = await getClientInfo();
 
-    // ✅ Ja nav vēl subscriber — pievieno
     const { data: existingSubscriber } = await supabase
       .from("subscribers")
       .select("email")
@@ -256,26 +288,17 @@ export default function ScannerPage() {
       await supabase.from("subscribers").insert({ email });
     }
 
-    // ✅ Atjauno tikai e-pastu esošajā ierakstā (bez skaita palielināšanas)
     await supabase
       .from("scan_usage")
-      .update({
-        email,
-        fingerprint,
-        user_agent: userAgent,
-      })
+      .update({ email, fingerprint, user_agent: userAgent })
       .eq("ip_address", ip);
 
-    // ✅ Atjauno augšējo joslu (scansLeft, emailRequired)
     await checkScanAllowed();
-
-    // ✅ Aizver modal
     setShowEmailModal(false);
   };
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-
     const params = new URLSearchParams(window.location.search);
     const verified = params.get("verified");
     const error = params.get("error");
@@ -289,7 +312,7 @@ export default function ScannerPage() {
           document.title,
           window.location.pathname
         );
-      }, 100); // Notīra URL
+      }, 100);
       clearMessageAfterDelay();
     }
 
@@ -420,17 +443,17 @@ export default function ScannerPage() {
             }}
           />
 
-          {suggestions.length > 0 && inputValue.length >= 2 && (
+          {suggestions.length > 0 && inputValue.length >= 1 && (
             <div className="absolute left-0 top-full -mt-16 pt-3 md:-mt-2 rounded-b-lg w-full bg-card shadow-lg -z-1 custom-scrollbar max-h-[300px]">
               {suggestions.map((collection, index) => (
                 <div
-                  key={collection.id}
+                  key={collection.collectionId || collection.id || index}
                   onClick={() => {
-                    setContractInput(collection.id);
+                    selectedFromSuggestionsRef.current = true;
                     setInputValue(collection.name || "");
+                    setContractInput(collection.collectionId || collection.id);
                     setSuggestions([]);
                     setSelectedIndex(-1);
-                    setSelectedFromSuggestions(true);
                   }}
                   className={`flex items-center p-3 cursor-pointer gap-3 ${
                     index === selectedIndex
@@ -455,6 +478,12 @@ export default function ScannerPage() {
                     <p className="font-medium">{collection.name}</p>
                     <p className="text-xs text-paragraph">
                       {collection.symbol}
+                    </p>
+                    <p className="text-xs text-paragraph">
+                      {collection.id?.slice(0, 6) +
+                        "..." +
+                        collection.id?.slice(-4)}
+                      {collection.collectionId?.slice(0, 6)}
                     </p>
                   </div>
                 </div>

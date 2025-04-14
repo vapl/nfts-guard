@@ -1,7 +1,7 @@
 // Refaktors turpinās: izmanto fetchHolderDistribution helperi datu ielādei
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { FaRegCopy, FaCheck } from "react-icons/fa";
+import { FaRegCopy, FaCheck, FaDownload } from "react-icons/fa";
 import { ScanResultCard } from "./ScannerResultCard";
 import { WhaleStatsDashboard } from "./WhaleStatsCard";
 import { HolderDistributionChart } from "../charts/HolderDistributionChart";
@@ -12,13 +12,14 @@ import { calculateSafetyScore } from "@/lib/analysis/calculateSafetyScore";
 import {
   fetchSectionExplanation,
   fetchScanSummary,
-} from "@/lib/openai/fetchExplanation";
+} from "@/lib/openai/fetchAIExplanation";
 import { generateScanCards } from "@/components/scanner/generateScanCards";
 import { fetchHolderDistribution } from "@/lib/fetch/fetchHolderDistribution";
 import { ScannerResultsProps } from "@/types/apiTypes/globalApiTypes";
 import { HolderDistribution } from "@/types/apiTypes/holderDistribution";
 import { ScanSummaryInput } from "@/types/apiTypes/scanSummary";
 import LoadingSummaryCardSkeleton from "../loadings/LoadingSummaryCardSceleton";
+import { handleDownloadPDF } from "./ScannerResultsPdf";
 
 export function ScannerResults({
   contractAddress,
@@ -58,19 +59,30 @@ export function ScannerResults({
   useEffect(() => {
     async function generateSummary() {
       const scanData: ScanSummaryInput = {
-        collectionData,
-        washTradingAnalysis,
-        rugPullAnalysis,
-        whaleActivityAnalysis: {
-          whaleStats: whaleActivityAnalysis.whaleStats,
-        },
+        contractAddress,
         safetyScore: derivedSafetyScore,
+        washTradingIndex: washTradingAnalysis?.washTradingIndex ?? 0,
+        rugPullRiskLevel: rugPullAnalysis?.risk_level ?? "N/A",
+        whaleDumpPercent: rugPullAnalysis?.whale_drop_percent ?? 0,
+        sellerBuyerRatio: parseFloat(
+          rugPullAnalysis?.seller_to_buyer_ratio ?? "0"
+        ),
+        uniqueBuyers: rugPullAnalysis?.unique_buyers ?? 0,
+        uniqueSellers: rugPullAnalysis?.unique_sellers ?? 0,
+        liquidityScore: 0, // var aizvietot ar reālu aprēķinu, ja pieejams
+        volatilityIndex: 0,
+        volumeTotal: 0,
+        holderDistribution: {
+          whalesPercent: 0,
+          decentralizationScore: 0,
+        },
       };
       const result = await fetchScanSummary(scanData);
       setSummary(result);
     }
     generateSummary();
   }, [
+    contractAddress,
     collectionData,
     washTradingAnalysis,
     rugPullAnalysis,
@@ -129,7 +141,9 @@ export function ScannerResults({
         explanationCards,
         contractAddress
       );
-      setCardExplanations(result);
+      if (result) {
+        setCardExplanations(result);
+      }
     }
 
     generateCardExplanations();
@@ -152,8 +166,20 @@ export function ScannerResults({
   };
 
   return (
-    <div className="relative w-full py-8 px-3 lg:px-16 xl:px-24">
+    <div
+      id="scan-result-section"
+      className="relative w-full py-8 px-3 lg:px-16 xl:px-24"
+    >
       {/* Header + Safety Score */}
+      <div>
+        <button
+          onClick={handleDownloadPDF}
+          className="flex flex-1 place-self-end gap-2 text-blue-600 hover:text-blue-800 hover:underline px-4 py-2 underline cursor-pointer transition-colors duration-200"
+        >
+          <FaDownload />
+          Download a PDF snapshot of this analysis
+        </button>
+      </div>
       <div className="flex flex-col bg-card rounded-xl p-6  sm:flex-row items-start sm:items-center justify-between gap-6 drop-shadow-lg">
         <div className="flex w-full sm:w-auto items-center justify-between">
           {collectionData.image_url && (

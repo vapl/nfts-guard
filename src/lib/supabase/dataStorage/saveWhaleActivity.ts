@@ -32,8 +32,6 @@ export async function saveWhaleActivityToSupabase(
         return;
       }
     }
-
-    console.log("✅ Whale activity successfully saved!");
   } catch (error) {
     console.error("❌ Error in saveWhaleActivityToSupabase:", error);
   }

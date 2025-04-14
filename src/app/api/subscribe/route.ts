@@ -15,8 +15,6 @@ export async function POST(req: Request) {
       );
     }
 
-    console.log("Sending subscription confirmation email to:", email);
-
     const emailContent = generateSubscribeEmailContent();
 
     const response = await resend.emails.send({

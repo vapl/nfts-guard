@@ -68,8 +68,6 @@ export async function saveCollectionToSupabase(
     if (upsertError) {
       console.error("❌ Failed to save collection:", upsertError);
     } else {
-      console.log("✅ Collection successfully saved to Supabase!");
-      console.log("📌 Kolekcijas dati:", collectionData);
     }
   } catch (err) {
     console.error("🔥 Unexpected error in saveCollectionToSupabase:", err);

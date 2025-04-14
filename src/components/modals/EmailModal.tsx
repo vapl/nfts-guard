@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "../ui/Input";
 import Button from "../ui/Button";
 import { supabase } from "@/lib/supabase/supabase";
 import { getValidationError } from "@/utils/validation";
 import { MdEmail } from "react-icons/md";
 import { getClientInfo } from "@/utils/getClientInfo";
+import { getSettings } from "@/utils/getSettings";
 
 interface Props {
   isOpen: boolean;
@@ -19,6 +20,7 @@ export default function EmailModal({ isOpen, onClose, onSubmit }: Props) {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | "">("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [freeScans, setFreeScans] = useState(0);
 
   const clearMessageAfterDelay = () => {
     setTimeout(() => {
@@ -27,6 +29,14 @@ export default function EmailModal({ isOpen, onClose, onSubmit }: Props) {
     }, 5000);
   };
 
+  useEffect(() => {
+    const fetchDefaultFreeScans = async () => {
+      const scans = await getSettings<number>("default_free_scans");
+      setFreeScans(scans ?? 3);
+    };
+    fetchDefaultFreeScans();
+  }, []);
+
   const maskEmail = (email: string): string => {
     const [name, domain] = email.split("@");
     return `${name[0]}***@${domain.slice(0, 2)}***.${domain.split(".").pop()}`;
@@ -34,8 +44,8 @@ export default function EmailModal({ isOpen, onClose, onSubmit }: Props) {
 
   const handleSubmit = async () => {
     const trimmed = email.trim().toLowerCase();
-
     const error = getValidationError("email", trimmed, undefined, true);
+
     if (error) {
       setMessage(error);
       setMessageType("error");
@@ -44,93 +54,87 @@ export default function EmailModal({ isOpen, onClose, onSubmit }: Props) {
     }
 
     setIsSubmitting(true);
-
     try {
       const { ip, fingerprint, userAgent } = await getClientInfo();
 
-      // 1. Get usage by IP
+      // 1. IP jau sasaistīts ar citu e-pastu?
       const { data: usage } = await supabase
         .from("scan_usage")
         .select("email")
         .eq("ip_address", ip)
         .maybeSingle();
 
-      const emailsMatch = usage?.email?.toLowerCase() === trimmed;
+      const emailLinkedToOther =
+        usage?.email && usage.email.toLowerCase() !== trimmed;
 
-      // ❗ Ja IP piesaistīts citam e-pastam (nevis pašreizējam)
-      if (usage?.email && !emailsMatch) {
-        // Pārbauda vai tas cits e-pasts ir verificēts
-        const { data: linkedSubscriber } = await supabase
+      if (emailLinkedToOther) {
+        const { data: other } = await supabase
           .from("subscribers")
           .select("is_verified")
           .eq("email", usage.email)
           .maybeSingle();
 
-        if (linkedSubscriber?.is_verified) {
+        if (other?.is_verified) {
           setMessage("This IP is already linked to another verified email.");
           setMessageType("error");
           setIsSubmitting(false);
           clearMessageAfterDelay();
           return;
         }
-
-        // ❗ Ja IP ir sasaistīts ar citu e-pastu, bet tas nav verificēts – ļaujam nomainīt
       }
 
-      // 2. Check if email is already in `subscribers`
-      const { data: existingSubscriber } = await supabase
+      // 2. Šis e-pasts jau verificēts?
+      const { data: subscriber } = await supabase
         .from("subscribers")
-        .select("email, is_verified")
+        .select("is_verified")
         .eq("email", trimmed)
         .maybeSingle();
 
-      if (existingSubscriber?.is_verified) {
+      if (subscriber?.is_verified) {
         setMessage("This email is already verified.");
         setMessageType("success");
         setIsSubmitting(false);
         clearMessageAfterDelay();
-        if (onSubmit) onSubmit(trimmed); // 🔁 Refresh UI
+        if (onSubmit) onSubmit(trimmed);
         return;
       }
 
-      // 3. Insert or update scan_usage
-      const { data: scanUsage } = await supabase
+      // 3. Update esošo rindu
+      const { data: updated, error: updateErr } = await supabase
         .from("scan_usage")
-        .select("ip_address")
+        .update({
+          email: trimmed,
+          fingerprint,
+          user_agent: userAgent,
+          free_scans_left: freeScans - 1,
+          free_scans_reset_at: new Date().toISOString().split("T")[0],
+          free_scan_used: true,
+        })
         .eq("ip_address", ip)
-        .maybeSingle();
+        .select("*");
 
-      if (!scanUsage) {
-        const { error: insertScanError } = await supabase
-          .from("scan_usage")
-          .insert({
-            ip_address: ip,
-            email: trimmed,
-            fingerprint,
-            user_agent: userAgent,
-            scans_today: 0,
-            total_scans: 0,
-            last_scan_at: null,
-          });
+      if (updateErr) {
+        console.error("❌ Update error:", updateErr.message);
+      }
 
-        if (insertScanError) {
-          setMessage("Failed to register scan usage.");
-          setMessageType("error");
-          setIsSubmitting(false);
-          return;
-        }
-      } else {
-        // Update if not already linked
-        const { error: updateError } = await supabase
-          .from("scan_usage")
-          .update({
-            email: trimmed,
-            fingerprint,
-            user_agent: userAgent,
-          })
-          .eq("ip_address", ip);
+      console.log("Updated row:", updated);
 
-        if (updateError) {
+      // 4. Ja update nenostrādāja — veido jaunu rindu
+      if (!updated || updated.length === 0) {
+        const { error: insertErr } = await supabase.from("scan_usage").insert({
+          ip_address: ip,
+          email: trimmed,
+          fingerprint,
+          user_agent: userAgent,
+          paid_scans_left: 0,
+          free_scans_left: freeScans - 1,
+          free_scan_used: true,
+          free_scans_reset_at: new Date().toISOString().split("T")[0],
+          total_scans: 0,
+          last_scan_at: null,
+        });
+
+        if (insertErr) {
           setMessage("Failed to link your IP to email.");
           setMessageType("error");
           setIsSubmitting(false);
@@ -138,7 +142,9 @@ export default function EmailModal({ isOpen, onClose, onSubmit }: Props) {
         }
       }
 
-      // 4. Send verification email
+      console.log("Updated row:", updated);
+
+      // 5. Sūti verifikācijas e-pastu
       const response = await fetch("/api/send-verification", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -148,9 +154,9 @@ export default function EmailModal({ isOpen, onClose, onSubmit }: Props) {
       const result = await response.json();
 
       if (!response.ok) {
+        console.error("📧 Email error:", result?.error);
         setMessage(result?.error || "Email send failed. Please try again.");
         setMessageType("error");
-        console.error("Resend error:", result.error);
       } else {
         setMessage(
           `Verification email sent to ${maskEmail(
@@ -158,13 +164,12 @@ export default function EmailModal({ isOpen, onClose, onSubmit }: Props) {
           )}. Please check your inbox.`
         );
         setMessageType("success");
-
         if (onSubmit) onSubmit(trimmed);
 
         setTimeout(() => {
-          setMessage(""); // notīri pēc tam
-          onClose(); // aizver modalīti
-        }, 5000); // ← pietiek ar 2–3 sekundēm
+          setMessage("");
+          onClose();
+        }, 5000);
       }
     } catch (err) {
       console.error("Unexpected error:", err);
@@ -175,6 +180,8 @@ export default function EmailModal({ isOpen, onClose, onSubmit }: Props) {
     setIsSubmitting(false);
   };
 
+  const validFreeScans = Math.max(freeScans - 1, 0);
+
   if (!isOpen) return null;
 
   return (
@@ -182,7 +189,8 @@ export default function EmailModal({ isOpen, onClose, onSubmit }: Props) {
       <div className="bg-card p-6 rounded-xl w-full max-w-md shadow-lg text-center mx-4">
         <h2 className="text-xl font-bold mb-4">Enter your email</h2>
         <p className="text-sm text-paragraph mb-4">
-          Get <strong>2 more scans</strong> today by verifying your email.
+          Get <strong>{validFreeScans} more scans</strong> today by verifying
+          your email.
         </p>
 
         <Input
@@ -194,10 +202,30 @@ export default function EmailModal({ isOpen, onClose, onSubmit }: Props) {
           iconLeft={<MdEmail size={24} className="ml-2" />}
           validate="email"
           required
-          // showError={!!message && messageType === "error"}
           onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
           disabled={isSubmitting}
         />
+        <p className="text-xs text-paragraph mt-2">
+          By submitting you agree with our{" "}
+          <a
+            href="/terms"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-accent-purple"
+          >
+            Legal Terms
+          </a>{" "}
+          and{" "}
+          <a
+            href="/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-accent-purple"
+          >
+            Privacy Policy
+          </a>
+          .
+        </p>
 
         {message && (
           <div

@@ -28,19 +28,15 @@ export async function fetchAndAnalyzeNFTData(
 
     // ✅ 1️⃣ Iegūst kolekcijas datus un saglabā DB
     const collectionData = await getCollectionData(contractAddress);
-    console.log("✅ Collection Data Fetched:", collectionData);
 
     // ✅ 2️⃣ Iegūst pārdošanas darījumus un saglabā DB
     const salesData = await getNFTSales(contractAddress, timePeriod);
-    console.log(`✅ Sales Data Fetched (${salesData.length} records)`);
 
     // ✅ 3️⃣ Iegūst transakcijas un saglabā DB
     const transferData = await getNFTTransfers(contractAddress, timePeriod);
-    console.log(`✅ Transfer Data Fetched (${transferData.length} records)`);
 
     // ✅ 4️⃣ Iegūst kolekcijas īpašniekus un saglabā DB
     const ownersData = await getNFTCollectionOwners(contractAddress);
-    console.log(`✅ Owners Data Fetched (${ownersData.length} records)`);
 
     // ✅ 5️⃣ Izsauc Wash Trading analīzi pēc tam, kad pārdošanas dati ir ielādēti
     const washTradingAnalysis = await detectWashTrading(
@@ -50,14 +46,12 @@ export async function fetchAndAnalyzeNFTData(
 
     // ✅ 6️⃣ Izsauc Rug Pull analīzi
     const rugPullAnalysis = await detectRugPull(contractAddress, timePeriod);
-    console.log("✅ Rug Pull Analysis Completed:", rugPullAnalysis);
 
     // Izsauc Whale Activity analīzi
     const whaleActivityAnalysis = await getNFTWhaleActivity(
       contractAddress,
       timePeriod
     );
-    console.log("Whale activity analysis completed: ", whaleActivityAnalysis);
 
     const safetyScore = calculateSafetyScore({
       rugPullRiskLevel: rugPullAnalysis.risk_level as "Low" | "Medium" | "High",

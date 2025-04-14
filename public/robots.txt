@@ -1,0 +1,10 @@
+# *
+User-agent: *
+Allow: /
+Disallow: /api/
+
+# Host
+Host: https://nftsguard.com
+
+# Sitemaps
+Sitemap: https://nftsguard.com/sitemap.xml

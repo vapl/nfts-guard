@@ -3,7 +3,18 @@
 import { useScanLimiterContext } from "@/context/ScanContext";
 import { supabase } from "@/lib/supabase/supabase";
 import { getClientInfo } from "@/utils/getClientInfo";
+import { getSettings } from "@/utils/getSettings";
 import { useCallback } from "react";
+
+interface ScanUsage {
+  last_scan_at: string;
+  total_scans: number;
+  paid_scans_left?: number;
+  free_scans_left?: number;
+  free_scan_used?: boolean;
+  email?: string;
+  ip_address?: string;
+}
 
 export const useSaveScan = () => {
   const { checkScanAllowed } = useScanLimiterContext();
@@ -17,41 +28,103 @@ export const useSaveScan = () => {
       contractAddress: string | null = null,
       durationMs: number = 0
     ) => {
+      console.log("🔥 saveScan called");
+
       const now = new Date().toISOString();
       const { fingerprint, userAgent } = await getClientInfo();
+      const defaultFreeScans =
+        (await getSettings<number>("default_free_scans")) ?? 3;
 
-      const { data: existing } = await supabase
-        .from("scan_usage")
-        .select("*")
-        .or(`email.eq.${email},ip_address.eq.${ip}`)
-        .maybeSingle();
+      let existing: ScanUsage | null = null;
 
-      const lastScan = existing?.last_scan_at
-        ? new Date(existing.last_scan_at)
-        : null;
+      if (email) {
+        const { data, error } = await supabase
+          .from("scan_usage")
+          .select("*")
+          .eq("email", email)
+          .maybeSingle();
 
-      const within24h = lastScan
-        ? Date.now() < lastScan.getTime() + 24 * 60 * 60 * 1000
-        : false;
+        if (error) console.error("❌ Error fetching by email:", error.message);
+        existing = data;
+      }
 
-      // If there is no existing record, create a new one
-      const newScanUsage = {
-        ip_address: ip,
-        email,
-        fingerprint,
-        user_agent: userAgent,
-        scans_today: within24h
-          ? Math.min((existing?.scans_today ?? 0) + 1, email ? 3 : 1)
-          : 1,
-        total_scans: (existing?.total_scans ?? 0) + 1,
-        last_scan_at: now,
-      };
+      if (!existing) {
+        const { data, error } = await supabase
+          .from("scan_usage")
+          .select("*")
+          .eq("ip_address", ip)
+          .maybeSingle();
 
-      // ✅ 1. Upsert scan limits
-      await supabase.from("scan_usage").upsert(newScanUsage);
+        if (error) console.error("❌ Error fetching by IP:", error.message);
+        existing = data;
+      }
 
-      // ✅ 2. Insert full scan log
-      await supabase.from("scan_usage_log").insert({
+      if (!existing) {
+        const insert = await supabase.from("scan_usage").insert({
+          ip_address: ip,
+          email,
+          fingerprint,
+          user_agent: userAgent,
+          paid_scans_left: 0,
+          free_scans_left: defaultFreeScans - 1,
+          free_scans_reset_at: new Date().toISOString().split("T")[0],
+          total_scans: 1,
+          free_scan_used: !email,
+          last_scan_at: now,
+        });
+
+        if (insert.error)
+          console.error("❌ Insert error:", insert.error.message);
+        else console.log("✅ Inserted new scan usage row.");
+      } else {
+        const updates: ScanUsage = {
+          last_scan_at: now,
+          total_scans: (existing.total_scans ?? 0) + 1,
+        };
+
+        if ((existing.paid_scans_left ?? 0) > 0) {
+          updates.paid_scans_left = Math.max(
+            0,
+            (existing.paid_scans_left ?? 0) - 1
+          );
+        } else if ((existing.free_scans_left ?? 0) > 0) {
+          updates.free_scans_left = Math.max(
+            0,
+            (existing.free_scans_left ?? 0) - 1
+          );
+        } else if (
+          (!email && !existing.free_scan_used) ||
+          (email &&
+            (existing.free_scans_left === null ||
+              existing.free_scans_left === undefined))
+        ) {
+          // Pirmais bezmaksas skanējums anonīmajam lietotājam vai ja nav iestatīts free_scans_left
+          updates.free_scans_left = defaultFreeScans - 1;
+          if (!email) updates.free_scan_used = true;
+        } else {
+          console.warn("⚠️ No scans left to decrement or initialize.");
+        }
+
+        const { error, data } = await supabase
+          .from("scan_usage")
+          .update(updates)
+          .eq(existing.email ? "email" : "ip_address", existing.email ?? ip)
+          .select();
+
+        if (error) {
+          console.error("❌ Failed to update scan usage:", error.message);
+        } else if (!data || data.length === 0) {
+          console.warn("⚠️ No rows updated!");
+        } else {
+          console.log("✅ Updated scan usage:", data[0]);
+        }
+      }
+
+      // 🔄 Refresh context state
+      await checkScanAllowed();
+
+      // 📒 Log event
+      const log = await supabase.from("scan_usage_log").insert({
         ip_address: ip,
         email,
         fingerprint,
@@ -59,9 +132,14 @@ export const useSaveScan = () => {
         contract_address: contractAddress,
         result_status: status,
         error_message: errorMessage,
-        duration_ms: durationMs, // ja vajag, var no frontend arī izmērīt laiku
+        duration_ms: durationMs,
       });
-      await checkScanAllowed(); // Refresh top bar
+
+      if (log.error) {
+        console.error("❌ Log insert failed:", log.error.message);
+      } else {
+        console.log("📝 Log inserted");
+      }
     },
     [checkScanAllowed]
   );

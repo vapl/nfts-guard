@@ -59,7 +59,6 @@ export async function getNFTCollectionOwners(contractAddress: string) {
     noOwnersExist || (await shouldUpdateOwners(contractAddress));
 
   if (!needsUpdate) {
-    console.log("✅ Owners are fresh. Skipping fetch.");
     return [];
   }
 
@@ -110,7 +109,6 @@ export async function getNFTCollectionOwners(contractAddress: string) {
     });
 
     allChangedOwners.push(...changedOwners);
-    console.log(`✅ ${changedOwners.length} changed owners found.`);
 
     if (owners.length < PAGE_SIZE) break;
     await sleep(500);
@@ -123,7 +121,6 @@ export async function getNFTCollectionOwners(contractAddress: string) {
       `✅ Saved ${allChangedOwners.length} total changed whale owners to DB.`
     );
   } else {
-    console.log("✅ No new or changed owners to save.");
   }
 
   return allChangedOwners;

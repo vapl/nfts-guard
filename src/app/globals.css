@@ -108,19 +108,11 @@
   }
   .btn-gradient {
     @apply px-6 py-3 text-lg font-semibold rounded-lg shadow-lg text-white cursor-pointer transition;
-    background-image: linear-gradient(
-      to right,
-      oklch(55.8% 0.288 302.321),
-      oklch(58.5% 0.233 277.117)
-    );
+    background-image: linear-gradient(to right, #a855f7, #3b82f6);
   }
 
   .border-gradient {
-    background-image: linear-gradient(
-      to right,
-      oklch(55.8% 0.288 302.321),
-      oklch(58.5% 0.233 277.117)
-    );
+    background-image: linear-gradient(to right, #a855f7, #3b82f6);
   }
 
   .border-gradient > .inner {
@@ -228,4 +220,10 @@ body {
   .hide-scrollbar::-webkit-scrollbar {
     display: none; /* Chrome/Safari */
   }
+}
+
+/* === For PDF generation === */
+.force-safe-gradient .btn-gradient,
+.force-safe-gradient .border-gradient {
+  background-image: #3b82f6;
 }

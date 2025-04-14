@@ -168,10 +168,11 @@ export interface ScannerResultsProps {
 
 export interface searchSuggestionProps {
   id: string;
-  name?: string;
-  image?: string;
+  name: string;
+  image?: string | null;
   symbol?: string;
-  collectionId: string;
+  collectionId?: string;
+  updated_at?: string;
 }
 
 export interface ScanResultCardProps {

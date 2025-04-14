@@ -49,7 +49,6 @@ export async function saveOwnersToSupabase(owners: NFTCollectionOwnerProps[]) {
       .map((owner) => ({ ...owner, last_updated: now }));
 
     if (!changedOwners.length) {
-      console.log("✅ No changes detected in owners. Skipping save.");
       return;
     }
 
@@ -62,7 +61,6 @@ export async function saveOwnersToSupabase(owners: NFTCollectionOwnerProps[]) {
     if (upsertError) {
       console.error("❌ Failed to save changed owners:", upsertError);
     } else {
-      console.log(`✅ ${changedOwners.length} owners updated in Supabase.`);
     }
   } catch (err) {
     console.error("🔥 Unexpected error in saveOwnersToSupabase:", err);

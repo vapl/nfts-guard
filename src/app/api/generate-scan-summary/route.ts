@@ -1,14 +1,14 @@
-// app/api/generate-scan-summary/route.ts
 import { NextResponse } from "next/server";
 import openai from "@/lib/openai/openaiClient";
 import { ScanSummaryInput } from "@/types/apiTypes/scanSummary";
 import { upsertAnalysis } from "@/lib/supabase/helpers/upsertAnalysis";
+import { supabase } from "@/lib/supabase/supabase";
+
+const REFETCH_INTERVAL_HOURS = 24;
 
 export async function POST(req: Request) {
   const { scanData }: { scanData: ScanSummaryInput } = await req.json();
-  const contractAddress = scanData.collectionData?.contract_address;
-
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const { contractAddress } = scanData;
 
   if (!contractAddress) {
     return NextResponse.json(
@@ -17,57 +17,65 @@ export async function POST(req: Request) {
     );
   }
 
-  let summary = null;
-
   try {
-    const cached = await fetch(
-      `${baseUrl}/api/get-analysis?contractAddress=${contractAddress}`
-    );
-    const json = await cached.json();
-    summary = json?.summary ?? null;
-  } catch (err) {
-    console.warn(
-      "⚠️ Cache fetch failed, continuing with fresh generation.",
-      err
-    );
-  }
+    // ✅ 1. Pārbaudi vai datubāzē jau ir ģenerēts summary pēdējo 24h laikā
+    const { data: existing } = await supabase
+      .from("nft_ai_analysis_results")
+      .select("summary, updated_at")
+      .eq("contract_address", contractAddress)
+      .single();
 
-  if (summary) {
-    return NextResponse.json({ summary });
-  }
+    const updatedAt = existing?.updated_at
+      ? new Date(existing.updated_at).getTime()
+      : 0;
+    const now = Date.now();
 
-  // 🧐 Generate new summary
-  const prompt = `
-    You are an NFT security expert.
+    const diffHours = (now - updatedAt) / (1000 * 60 * 60);
+    const isFresh = diffHours < REFETCH_INTERVAL_HOURS;
 
-    Summarize the NFT collection scan for a regular investor using 2–3 concise sentences. 
-    Clearly state the collection's safety level and risk profile, based on metrics such as:
-    - Safety score
-    - Wash trading index
-    - Rug pull indicators (whale drop, buyer/seller ratio)
-    - Whale activity (accumulation, dumping, flipping)
-    - Volume, liquidity, and volatility
-    - Holder distribution and decentralization
+    if (existing?.summary && isFresh) {
+      return NextResponse.json({ summary: existing.summary });
+    }
 
-    Return an objective summary based on these inputs:
+    // 🧠 2. Izsauc OpenAI (lētā versija)
+    const prompt = `
+      You are an NFT security expert and advisor.
 
-    ${JSON.stringify(scanData, null, 2)}
-  `;
+      Your task is to summarize the overall health and risk profile of an NFT collection scan in 2–3 short, clear sentences.
 
-  try {
+      Focus on:
+      - Overall trend and investment outlook (positive, neutral, risky)
+      - Key signals like safety score, rug pull risk, wash trading, liquidity, whale activity, decentralization
+      - Any warning signs or positive signs for potential investors
+      - A short and helpful recommendation for investors (e.g., “looks safe”, “exercise caution”, “too risky”)
+
+      Avoid technical terms, numbers or raw data. Be objective and neutral in tone.
+
+      Format:
+      Return one valid JSON object like this:
+      { "summary": "..." }
+
+      ❗ Do NOT include markdown or text outside the JSON.
+      ❗ Do NOT mention specific numbers or metric names.
+      ❗ Do NOT return multiple objects.
+
+      Data:
+      ${JSON.stringify(scanData, null, 2)}
+    `;
+
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-3.5-turbo-1106", // ✅ Lēts modelis (~$0.001 / 750 words)
       messages: [{ role: "user", content: prompt }],
     });
 
-    const summary =
-      completion.choices[0].message?.content ?? "No summary available.";
+    const summary = completion.choices[0].message?.content?.trim() ?? "";
 
+    // ✅ 3. Saglabā kešā
     await upsertAnalysis(contractAddress, { summary });
 
     return NextResponse.json({ summary });
-  } catch (err) {
-    console.error("OpenAI Summary Error:", err);
+  } catch (error) {
+    console.error("❌ Error in generate-scan-summary:", error);
     return NextResponse.json(
       { error: "Failed to generate summary" },
       { status: 500 }

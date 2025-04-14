@@ -7,9 +7,8 @@ import {
 } from "@/lib/analysis/generateHolderDistributionData";
 import { NFTCollectionOwnerProps } from "@/types/apiTypes/globalApiTypes";
 import { upsertHolderDistribution } from "@/lib/supabase/helpers/upsertHolderDistribution";
-import { saveScanSummary } from "@/lib/supabase/helpers/saveScanSummary";
-import { ScanSummaryInput } from "@/types/apiTypes/scanSummary";
 import { calculateSafetyScore } from "@/lib/analysis/calculateSafetyScore";
+import { upsertAnalysis } from "@/lib/supabase/helpers/upsertAnalysis";
 
 export async function POST(req: Request) {
   try {
@@ -23,7 +22,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ 1. Fetch core NFT data + risk analysis
+    // ✅ 1. Fetch + Analyze NFT data
     const result = await fetchAndAnalyzeNFTData(contractAddress, timePeriod);
 
     const rugPull = result?.rugPullAnalysis;
@@ -35,7 +34,7 @@ export async function POST(req: Request) {
       | "Uncertain"
       | "N/A";
 
-    // ✅ 2. Holder Distribution calculation
+    // ✅ 2. Get holder data and save distribution
     const { data: owners, error } = await supabase
       .from("nft_owners")
       .select("wallet, token_count, ownership_percentage, on_sale_count")
@@ -49,17 +48,14 @@ export async function POST(req: Request) {
       );
     }
 
-    const holderDistribution = Array.isArray(owners)
-      ? generateHolderDistributionData(owners as NFTCollectionOwnerProps[])
-      : null;
-
-    if (holderDistribution) {
-      await upsertHolderDistribution(contractAddress, holderDistribution);
-    }
+    const holderDistribution = generateHolderDistributionData(
+      owners as NFTCollectionOwnerProps[]
+    );
+    await upsertHolderDistribution(contractAddress, holderDistribution);
 
     const holderRisk = generateHolderRiskMetrics(owners);
 
-    // ✅ 3. Safety Score calculation
+    // ✅ 3. Safety Score
     const safetyScore = calculateSafetyScore({
       rugPullRiskLevel: rugRisk,
       washTradingIndex: washIndex,
@@ -72,8 +68,9 @@ export async function POST(req: Request) {
       uniqueSellers: rugPull?.unique_sellers ?? 0,
     });
 
-    // ✅ 4. Prepare AI input & trigger AI generation (if needed)
-    const scanInput: ScanSummaryInput = {
+    // ✅ 4. Build full summary input
+    const scanInput = {
+      contractAddress,
       safetyScore,
       washTradingIndex: washIndex,
       rugPullRiskLevel: rugRisk,
@@ -90,13 +87,19 @@ export async function POST(req: Request) {
       },
     };
 
-    await saveScanSummary(contractAddress, scanInput);
+    // ✅ 5. Save to analysis table (so /api/generate-scan-summary will use updated data)
+    await upsertAnalysis(contractAddress, { summary: undefined }); // Reset summary so AI route will regenerate
+    await supabase.from("nft_ai_analysis_results").upsert({
+      contract_address: contractAddress,
+      updated_at: new Date().toISOString(),
+    });
 
     return NextResponse.json({
       contractAddress,
       safetyScore,
       riskLevel: rugRisk,
       holderDistribution,
+      scanInput,
       ...result,
     });
   } catch (error) {

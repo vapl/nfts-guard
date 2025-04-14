@@ -59,7 +59,6 @@ export async function getCollectionData(
     );
 
     if (lastUpdatedTimestamp >= refreshThreshold) {
-      console.log("✅ Collection data is fresh. Returning cached data.");
       return cachedCollection;
     }
   }
@@ -70,12 +69,10 @@ export async function getCollectionData(
     );
 
     if (lastUpdatedTimestamp >= refreshThreshold) {
-      console.log("✅ Collection data is fresh. Returning cached data.");
       return cachedCollection;
     }
   }
 
-  console.log("🔄 Fetching fresh collection data from API...");
   const response = await reservoirClient.get(
     `/collections/v7?contract=${contractAddress}`
   );

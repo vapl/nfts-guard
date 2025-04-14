@@ -37,7 +37,6 @@ export async function getNFTOwners(
       try {
         const owner = await contract.ownerOf(tokenId);
         owners.push({ wallet: owner, tokenId });
-        console.log(`✅ Token ${tokenId} owned by ${owner}`);
       } catch {
         console.warn(`⚠️ Token ${tokenId} not found (burned or invalid)`);
       }

@@ -13,8 +13,6 @@ export async function getNFTSales(
   timePeriod: number
 ): Promise<NFTTransactionProps[]> {
   try {
-    console.log(`🔎 Checking for cached sales in DB: ${contractAddress}`);
-
     const nowTimestamp = Math.floor(Date.now() / 1000);
     const requestedStartTimestamp = nowTimestamp - timePeriod * 24 * 60 * 60;
 
@@ -198,7 +196,6 @@ async function fetchAndSaveSales(
     );
     await saveSalesToSupabase(allNewSales); // ✅ Saglabā VISUS ierakstus vienā pieprasījumā
   } else {
-    console.log("✅ No new sales to save.");
   }
 }
 
@@ -242,7 +239,6 @@ async function getCachedSales(
       }
     }
 
-    console.log(`✅ Returning ${allSales.length} cached sales from Supabase.`);
     return allSales;
   } catch (error) {
     console.error("❌ Error getting cached sales:", error);

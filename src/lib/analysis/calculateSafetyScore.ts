@@ -10,6 +10,7 @@ export function calculateSafetyScore(params: {
   salesCount?: number;
   uniqueBuyers?: number;
   uniqueSellers?: number;
+  accumulatingWhalePercent?: number;
 }): number {
   const weights = RISK_RULES.safetyScoreWeights;
   const score = 100;
@@ -19,7 +20,6 @@ export function calculateSafetyScore(params: {
     (params.salesCount ?? 0) === 0 ||
     (params.uniqueBuyers ?? 0) === 0 ||
     (params.uniqueSellers ?? 0) === 0;
-
   const sparseDataPenalty = isDataSparse ? 20 : 0;
 
   // 🧨 Rug pull impact
@@ -36,6 +36,8 @@ export function calculateSafetyScore(params: {
       ? 100 * weights.washTrading
       : params.washTradingIndex > RISK_RULES.washTrading.mediumThreshold
       ? 50 * weights.washTrading
+      : params.washTradingIndex < 5
+      ? -5 // ✅ Bonus for clean market
       : 0;
 
   // 🐋 Whale dump impact
@@ -68,6 +70,12 @@ export function calculateSafetyScore(params: {
       ? 50 * weights.volatility
       : 0;
 
+  // 🟢 Positive signal: whale accumulation
+  const whaleAccumulationBonus =
+    params.accumulatingWhalePercent && params.accumulatingWhalePercent > 15
+      ? 5
+      : 0;
+
   const totalPenalty =
     rugPullPenalty +
     washTradingPenalty +
@@ -77,5 +85,10 @@ export function calculateSafetyScore(params: {
     volatilityPenalty +
     sparseDataPenalty;
 
-  return Math.max(0, Math.min(100, score - totalPenalty));
+  const finalScore = Math.max(
+    0,
+    Math.min(100, score - totalPenalty + whaleAccumulationBonus)
+  );
+
+  return finalScore;
 }

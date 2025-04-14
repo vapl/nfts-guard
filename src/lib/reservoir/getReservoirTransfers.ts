@@ -25,8 +25,6 @@ export async function getNFTTransfers(
   timePeriod: 1 | 7 | 30 | 90 | 365
 ): Promise<NFTTransferProps[]> {
   try {
-    console.log(`🔎 Checking for cached transfers in DB: ${contractAddress}`);
-
     const nowTimestamp = Math.floor(Date.now() / 1000);
     const requestedStartTimestamp = nowTimestamp - timePeriod * 24 * 60 * 60;
 
@@ -220,9 +218,7 @@ async function fetchAndSaveTransfers(
       `✅ Saving ${allNewTransfers.length} new transfers to Supabase.`
     );
     await saveTransfersToSupabase(allNewTransfers);
-    console.log("✅ Successfully saved all new transfers.");
   } else {
-    console.log("✅ No new transfers to save.");
   }
 }
 

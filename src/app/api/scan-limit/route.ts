@@ -1,81 +1,157 @@
 import { supabase } from "@/lib/supabase/supabase";
 import { NextResponse } from "next/server";
+import { getSettings } from "@/utils/getSettings";
 
 export async function POST(req: Request) {
   const { email, ip, fingerprint } = await req.json();
 
-  const now = new Date();
-  const maxScans = email ? 3 : 1;
+  const scanIntervalSecs =
+    (await getSettings<number>("scan_interval_secs")) ?? 86400;
+  const fingerprintLimit =
+    (await getSettings<number>("max_fingerprint_scan")) ?? 5;
+
   let verifiedEmail: string | null = null;
 
-  // 1. Verify email exists in subscribers table
+  // 1. Check if email is verified
   if (email) {
     const { data: subscriber } = await supabase
       .from("subscribers")
-      .select("email")
+      .select("email, is_verified")
       .eq("email", email)
       .maybeSingle();
 
-    if (subscriber?.email) {
+    if (subscriber?.is_verified) {
       verifiedEmail = subscriber.email;
     }
   }
 
-  // 2. Get scan usage data by email or IP
+  // 2. Get usage data
   const { data: usageByEmail } = await supabase
     .from("scan_usage")
-    .select("scans_today, last_scan_at")
+    .select(
+      "paid_scans_left, free_scans_left, free_scans_reset_at, last_scan_at, total_scans"
+    )
     .eq("email", verifiedEmail)
     .maybeSingle();
 
   const { data: usageByIP } = await supabase
     .from("scan_usage")
-    .select("scans_today, last_scan_at")
+    .select("last_scan_at, free_scan_used")
     .eq("ip_address", ip)
     .maybeSingle();
 
-  const usage = usageByEmail || usageByIP;
-
+  // 3. Fingerprint abuse limit
   const { count: fingerprintCount } = await supabase
     .from("scan_usage")
     .select("*", { count: "exact", head: true })
     .eq("fingerprint", fingerprint)
     .gte(
       "last_scan_at",
-      new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+      new Date(Date.now() - scanIntervalSecs * 1000).toISOString()
     );
 
-  if ((fingerprintCount ?? 0) >= 3) {
+  if ((fingerprintCount ?? 0) >= fingerprintLimit) {
     return NextResponse.json(
-      { allowed: false, reason: "Fingerprint scan liit reached" },
+      { allowed: false, reason: "Fingerprint scan limit reached" },
       { status: 429 }
     );
   }
 
-  // 4. Rolling 24h logic
-  let scansToday = 0;
+  // 4. Evaluate scan permission
+  let allowed = false;
+  let scansLeft = 0;
   let resetTime: number | null = null;
+  let isAnonymousFirstScan = false;
 
-  if (usage?.last_scan_at) {
-    const lastScan = new Date(usage.last_scan_at);
-    const expiresAt = new Date(lastScan.getTime() + 24 * 60 * 60 * 1000);
-    resetTime = Math.floor(expiresAt.getTime() / 1000);
+  if (!verifiedEmail) {
+    if (usageByIP) {
+      const { last_scan_at, free_scan_used } = usageByIP;
 
-    const isWithin24h = now < expiresAt;
-    if (isWithin24h) {
-      scansToday = usage.scans_today;
+      const lastScanTime = last_scan_at ? new Date(last_scan_at).getTime() : 0;
+      const nowTime = Date.now();
+      const intervalMs = scanIntervalSecs * 1000;
+
+      const shouldReset =
+        lastScanTime > 0 && nowTime >= lastScanTime + intervalMs;
+
+      if (!free_scan_used) {
+        allowed = true;
+        scansLeft = 1;
+        isAnonymousFirstScan = true;
+      } else if (shouldReset && free_scan_used) {
+        await supabase
+          .from("scan_usage")
+          .update({
+            free_scans_left: 0,
+            free_scans_reset_at: new Date().toISOString(),
+            free_scan_used: false,
+            last_scan_at: new Date().toISOString(),
+          })
+          .eq("ip_address", ip);
+
+        allowed = true;
+        scansLeft = 1;
+        isAnonymousFirstScan = true;
+      }
+    } else {
+      allowed = true;
+      scansLeft = 1;
+      isAnonymousFirstScan = true;
     }
   }
 
-  const allowed = scansToday < maxScans;
-  const scansLeft = allowed ? maxScans - scansToday : 0;
-  const hasScanned = scansToday > 0;
+  if (verifiedEmail && usageByEmail) {
+    const { last_scan_at, free_scans_left, total_scans } = usageByEmail;
+    const defaultFreeScans =
+      (await getSettings<number>("default_free_scans")) ?? 3;
+
+    const lastScanTime = last_scan_at ? new Date(last_scan_at).getTime() : 0;
+    const nowTime = Date.now();
+    const intervalMs = scanIntervalSecs * 1000;
+
+    const shouldReset =
+      (free_scans_left ?? 0) <= defaultFreeScans &&
+      total_scans > 1 &&
+      lastScanTime > 0 &&
+      nowTime >= lastScanTime + intervalMs;
+
+    if (shouldReset) {
+      await supabase
+        .from("scan_usage")
+        .update({
+          free_scans_left: defaultFreeScans,
+          free_scans_reset_at: new Date().toISOString(), // tikai informatīvi
+        })
+        .eq("email", verifiedEmail);
+    }
+
+    // Nolasām no jauna — obligāti pēc iespējamā update
+    const { data: updatedUsage } = await supabase
+      .from("scan_usage")
+      .select(
+        "paid_scans_left, free_scans_left, last_scan_at, free_scan_used, total_scans"
+      )
+      .eq("email", verifiedEmail)
+      .maybeSingle();
+
+    scansLeft =
+      (updatedUsage?.free_scans_left ?? 0) +
+      (updatedUsage?.paid_scans_left ?? 0);
+    allowed = scansLeft > 0;
+
+    if (updatedUsage?.last_scan_at) {
+      const nextAvailable = new Date(
+        new Date(updatedUsage.last_scan_at).getTime() + scanIntervalSecs * 1000
+      );
+      resetTime = Math.floor(nextAvailable.getTime() / 1000);
+    }
+  }
 
   return NextResponse.json({
-    scansLeft,
-    emailRequired: !verifiedEmail,
-    resetTime,
     allowed,
-    hasScanned,
+    scansLeft,
+    resetTime,
+    emailRequired: !verifiedEmail && !isAnonymousFirstScan,
+    emailUnverified: !!email && !verifiedEmail,
   });
 }

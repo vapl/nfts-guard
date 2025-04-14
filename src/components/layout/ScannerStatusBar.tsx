@@ -3,56 +3,67 @@
 import { useScanLimiterContext } from "@/context/ScanContext";
 import { supabase } from "@/lib/supabase/supabase";
 import { getClientInfo } from "@/utils/getClientInfo";
-import { useEffect, useState } from "react";
+import { getSettings } from "@/utils/getSettings";
+import { useEffect, useRef, useState } from "react";
 
 export default function ScanStatusBar() {
   const {
     scansLeft,
     emailRequired,
     emailUnverified,
+    hasScannedOnce,
     resetTime,
     checkScanAllowed,
   } = useScanLimiterContext();
 
   const [timeLeft, setTimeLeft] = useState("");
   const [resendMessage, setResendMessage] = useState("");
+  const timeClearedRef = useRef(false);
+
+  const [freeScans, setFreeScans] = useState(0);
+  useEffect(() => {
+    const fetchDefaultFreeScans = async () => {
+      const scans = await getSettings<number>("default_free_scans");
+      setFreeScans(scans ?? 3);
+    };
+    fetchDefaultFreeScans();
+  }, []);
 
   // ✅ Reizē atsvaidzina arī atlikuma rādīšanu
   useEffect(() => {
     if (!resetTime) return;
 
-    const updateTimeLeft = () => {
+    const updateTimeLeft = async () => {
       const now = Date.now();
       const diff = resetTime * 1000 - now;
 
-      if (diff <= 0) {
-        setTimeLeft("");
-        checkScanAllowed(); // ✅ atsvaidzina skanēšanas limitus
+      if (diff <= 0 && !timeClearedRef.current) {
+        timeClearedRef.current = true; // ☑️ Pārtrauc turpmākos atjauninājumus
+        const result = await checkScanAllowed();
+
+        if (result.allowed) {
+          setTimeLeft("");
+        }
+
         return;
       }
 
       const hours = Math.floor(diff / (1000 * 60 * 60));
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      setTimeLeft(`in ${hours}h ${minutes}m`);
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
     };
 
-    // ✅ Uzreiz atjauno
-    updateTimeLeft();
+    updateTimeLeft(); // uzreiz izsauc
+    const interval = setInterval(updateTimeLeft, 1000);
 
-    // ⏳ Precīzs refresh brīdī, kad beidzas taimeris
-    const msUntilReset = resetTime * 1000 - Date.now();
-    const timeout = setTimeout(() => {
-      checkScanAllowed();
-    }, msUntilReset + 1000); // +1s buferis
-
-    // ⏱ Lai atjauno laiku ik pa laikam UI
-    const interval = setInterval(updateTimeLeft, 30_000);
-
-    return () => {
-      clearInterval(interval);
-      clearTimeout(timeout);
-    };
+    return () => clearInterval(interval);
   }, [resetTime, checkScanAllowed]);
+
+  // 🧹 Kad resetTime mainās, ļaujam atkal tīrīt nākotnē
+  useEffect(() => {
+    timeClearedRef.current = false;
+  }, [resetTime]);
 
   const handleResend = async () => {
     try {
@@ -88,21 +99,31 @@ export default function ScanStatusBar() {
     }
   };
 
-  const showStatusBar = scansLeft !== null || emailRequired;
-  if (!showStatusBar || !resetTime) return null;
+  const showStatusBar =
+    hasScannedOnce &&
+    ((scansLeft !== null && scansLeft !== 1) ||
+      emailRequired ||
+      emailUnverified ||
+      resetTime !== null);
+  if (!showStatusBar) return null;
 
-  const resetClock = new Date(resetTime * 1000).toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
+  const resetClock = resetTime
+    ? new Date(resetTime * 1000).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      })
+    : "";
+
+  const validFreeScans = Math.max(freeScans - 1, 0);
 
   return (
     <>
       <div className="block w-full rounded-full bg-gradient-to-r from-indigo-800 to-purple-600 text-white text-sm px-4 py-1 text-center z-50">
         {emailUnverified ? (
           <p className="text-sm text-white text-center">
-            Please verify your email to unlock <strong>2 more scans</strong>.{" "}
+            Please verify your email to unlock{" "}
+            <strong>{validFreeScans} more scans</strong>.{" "}
             {!resendMessage ? (
               <>
                 Did not receive?{" "}
@@ -118,8 +139,9 @@ export default function ScanStatusBar() {
             )}
           </p>
         ) : emailRequired ? (
-          <p>
-            Enter your email to unlock <strong>2 more scans</strong>.{" "}
+          <p className="text-sm text-white text-center">
+            Enter your email to unlock{" "}
+            <strong>{validFreeScans} more scans</strong>.{" "}
             <button
               onClick={() =>
                 window?.dispatchEvent(new Event("open-email-modal"))
@@ -130,20 +152,19 @@ export default function ScanStatusBar() {
             </button>
           </p>
         ) : scansLeft !== null && scansLeft > 0 ? (
-          <p>
+          <p className="text-sm text-white text-center">
             You have <strong>{scansLeft}</strong> scan
             {scansLeft !== 1 && "s"} left today.
           </p>
-        ) : (
-          <p>
+        ) : timeLeft !== "" ? (
+          <p className="text-sm text-white text-center">
             Your scan limit is reached. New scans available at{" "}
             <strong>{resetClock}</strong>{" "}
-            {timeLeft && (
-              <span className="opacity-70 text-sm">({timeLeft})</span>
-            )}
+            <span className="opacity-70 text-sm">({timeLeft})</span>
           </p>
-        )}
+        ) : null}
       </div>
+
       <div className="mb-7" />
     </>
   );

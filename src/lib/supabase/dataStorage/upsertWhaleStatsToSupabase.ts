@@ -27,6 +27,4 @@ export async function upsertWhaleStatsToSupabase(
     console.error("❌ Failed to upsert whale stats:", error);
     throw error;
   }
-
-  console.log("✅ Whale stats saved to Supabase");
 }

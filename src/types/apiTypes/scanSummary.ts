@@ -1,4 +1,5 @@
 export type ScanSummaryInput = {
+  contractAddress: string;
   safetyScore: number;
   washTradingIndex: number;
   rugPullRiskLevel: "Low" | "Medium" | "High" | "Uncertain" | "N/A";

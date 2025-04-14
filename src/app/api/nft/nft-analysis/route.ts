@@ -12,8 +12,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log(`🔎 Processing NFT analysis for: ${contractAddress}`);
-
     // Izsaucam backend funkciju, kas analizē NFT
     const result = await fetchAndAnalyzeNFTData(contractAddress, 30); // Analizējam pēdējo 30 dienu periodu
 

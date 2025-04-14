@@ -36,14 +36,11 @@ export async function POST(req: Request) {
     - Add emojis 🔥⚠️✅💀👻 where appropriate.
     - End with a call to action like “Scan before you ape. Try @NFTsGuard 🔍”
     - Include 2–3 relevant hashtags: #NFTs #Web3 #RugPull #DYOR #NFTCommunity
-    
-    Output format:
-    Tweet: ...
     `;
 
   try {
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-3.5-turbo-1106",
       messages: [{ role: "user", content: prompt }],
     });
 
