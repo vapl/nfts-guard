@@ -13,6 +13,7 @@ export default function ScanStatusBar() {
     emailUnverified,
     hasScannedOnce,
     resetTime,
+    paidScansLeft,
     checkScanAllowed,
   } = useScanLimiterContext();
 
@@ -154,7 +155,7 @@ export default function ScanStatusBar() {
         ) : scansLeft !== null && scansLeft > 0 ? (
           <p className="text-sm text-white text-center">
             You have <strong>{scansLeft}</strong> scan
-            {scansLeft !== 1 && "s"} left today.
+            {scansLeft !== 1 && "s"} left {!paidScansLeft && "today"}
           </p>
         ) : timeLeft !== "" ? (
           <p className="text-sm text-white text-center">

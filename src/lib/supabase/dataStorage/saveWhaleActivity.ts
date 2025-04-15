@@ -13,10 +13,6 @@ export async function saveWhaleActivityToSupabase(
       return;
     }
 
-    console.log(
-      `💾 Storing ${whaleActivity.length} whale activity records in DB...`
-    );
-
     // ✅ Sadalām lielus datus pa mazākām partijām
     const BATCH_SIZE = 500;
     for (let i = 0; i < whaleActivity.length; i += BATCH_SIZE) {

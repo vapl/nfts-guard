@@ -41,9 +41,6 @@ export async function getNFTSales(
 
     // ✅ If no data exists in Supabase, fetch the entire period
     if (!minData.length || !maxData.length) {
-      console.log(
-        `🔄 No sales found in DB. Fetching full ${timePeriod}-day period.`
-      );
       await fetchAndSaveSales(
         contractAddress,
         requestedStartTimestamp,
@@ -64,12 +61,6 @@ export async function getNFTSales(
       new Date(maxData[0]?.timestamp).getTime() / 1000
     );
 
-    console.log(
-      `📌 Supabase data range: ${new Date(
-        dbOldestTimestamp * 1000
-      ).toISOString()} – ${new Date(dbNewestTimestamp * 1000).toISOString()}`
-    );
-
     let fetchStart: number | null = null;
     let fetchEnd: number | null = null;
 
@@ -77,11 +68,7 @@ export async function getNFTSales(
     if (dbOldestTimestamp > requestedStartTimestamp) {
       fetchStart = requestedStartTimestamp;
       fetchEnd = dbOldestTimestamp - 1;
-      console.log(
-        `🔄 Fetching older sales: ${new Date(
-          fetchStart * 1000
-        ).toISOString()} – ${new Date(fetchEnd * 1000).toISOString()}`
-      );
+
       await fetchAndSaveSales(contractAddress, fetchStart, fetchEnd);
     }
 
@@ -89,21 +76,8 @@ export async function getNFTSales(
     if (dbNewestTimestamp < nowTimestamp) {
       fetchStart = dbNewestTimestamp + 1;
       fetchEnd = nowTimestamp;
-      console.log(
-        `🔄 Fetching new sales: ${new Date(
-          fetchStart * 1000
-        ).toISOString()} – ${new Date(fetchEnd * 1000).toISOString()}`
-      );
-      await fetchAndSaveSales(contractAddress, fetchStart, fetchEnd);
-    }
 
-    if (
-      dbOldestTimestamp <= requestedStartTimestamp &&
-      dbNewestTimestamp >= nowTimestamp
-    ) {
-      console.log(
-        "✅ Supabase already contains the full requested period. No API calls needed."
-      );
+      await fetchAndSaveSales(contractAddress, fetchStart, fetchEnd);
     }
 
     return await getCachedSales(
@@ -183,17 +157,10 @@ async function fetchAndSaveSales(
 
     allNewSales = [...allNewSales, ...newSales]; // ✅ Apvieno visus jaunus ierakstus
 
-    console.log(
-      `✅ Fetched ${newSales.length} new sales (Total: ${allNewSales.length})`
-    );
-
     await new Promise((resolve) => setTimeout(resolve, 1000)); // ✅ Palielināta aizture pret 429 kļūdu
   } while (continuationToken);
 
   if (allNewSales.length > 0) {
-    console.log(
-      `✅ Saving ${allNewSales.length} new sales transactions to Supabase.`
-    );
     await saveSalesToSupabase(allNewSales); // ✅ Saglabā VISUS ierakstus vienā pieprasījumā
   } else {
   }

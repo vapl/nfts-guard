@@ -117,9 +117,6 @@ export async function getNFTCollectionOwners(contractAddress: string) {
 
   if (allChangedOwners.length > 0) {
     await saveOwnersToSupabase(allChangedOwners);
-    console.log(
-      `✅ Saved ${allChangedOwners.length} total changed whale owners to DB.`
-    );
   } else {
   }
 

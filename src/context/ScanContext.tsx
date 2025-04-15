@@ -16,6 +16,7 @@ interface ScanLimiterContextType {
   hasScannedOnce: boolean;
   resetTime: number | null;
   emailUnverified: boolean;
+  paidScansLeft: boolean;
   setHasScannedOnce: (v: boolean) => void;
   checkScanAllowed: () => Promise<{
     allowed: boolean;
@@ -44,6 +45,7 @@ export const ScanLimiterProvider = ({
   const [resetTime, setResetTime] = useState<number | null>(null);
   const [hasScannedOnce, setHasScannedOnceState] = useState<boolean>(false);
   const [emailUnverified, setEmailUnverified] = useState<boolean>(false);
+  const [paidScansLeft, setPaidScansLeft] = useState<boolean>(false);
 
   const setHasScannedOnce = (value: boolean) => {
     setHasScannedOnceState(value);
@@ -62,9 +64,11 @@ export const ScanLimiterProvider = ({
       // Get email and last scan date by IP
       const { data: usage } = await supabase
         .from("scan_usage")
-        .select("email, last_scan_at, free_scan_used")
+        .select("email, last_scan_at, free_scan_used, paid_scans_left")
         .eq("ip_address", ip)
         .maybeSingle();
+
+      setPaidScansLeft(usage?.paid_scans_left > 0);
 
       // Check if scanned in the last 24h
       if (usage?.last_scan_at) {
@@ -137,6 +141,7 @@ export const ScanLimiterProvider = ({
         emailUnverified,
         hasScannedOnce,
         resetTime,
+        paidScansLeft,
         setHasScannedOnce,
         checkScanAllowed,
       }}

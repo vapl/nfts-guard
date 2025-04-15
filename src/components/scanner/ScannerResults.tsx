@@ -1,4 +1,3 @@
-// Refaktors turpinās: izmanto fetchHolderDistribution helperi datu ielādei
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { FaRegCopy, FaCheck, FaDownload } from "react-icons/fa";
@@ -20,6 +19,7 @@ import { HolderDistribution } from "@/types/apiTypes/holderDistribution";
 import { ScanSummaryInput } from "@/types/apiTypes/scanSummary";
 import LoadingSummaryCardSkeleton from "../loadings/LoadingSummaryCardSceleton";
 import { handleDownloadPDF } from "./ScannerResultsPdf";
+import { mergeTooltips } from "@/lib/helpers/mergeTooltips";
 
 export function ScannerResults({
   contractAddress,
@@ -134,9 +134,9 @@ export function ScannerResults({
   }, [cards, whaleStats, holderDistribution, collectionData.owner_count]);
 
   useEffect(() => {
-    if (!holderDistribution) return;
-
     async function generateCardExplanations() {
+      if (!explanationCards || explanationCards.length === 0) return;
+
       const result = await fetchSectionExplanation(
         explanationCards,
         contractAddress
@@ -147,11 +147,12 @@ export function ScannerResults({
     }
 
     generateCardExplanations();
-  }, [explanationCards, contractAddress, holderDistribution]);
+  }, [explanationCards, contractAddress]);
 
   useEffect(() => {
     async function loadDistribution() {
       const data = await fetchHolderDistribution(contractAddress);
+
       setHolderDistribution(data);
     }
     loadDistribution();
@@ -250,19 +251,11 @@ export function ScannerResults({
 
       {/* Metric Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mt-6">
-        {cards.map((card, index) => (
-          <ScanResultCard
-            key={index}
-            title={card.title}
-            value={card.value}
-            details={card.details}
-            icon={card.icon}
-            variant={card.variant}
-            chart={card.chart}
-            tooltipInfo={cardExplanations[card.title] || card.tooltipInfo}
-          />
+        {mergeTooltips(cards, cardExplanations).map((card, index) => (
+          <ScanResultCard key={index} {...card} />
         ))}
 
+        {/* Whale Stats */}
         {holderDistribution && (
           <div className="md:col-span-2 xl:col-span-1">
             <HolderDistributionChart
@@ -276,6 +269,7 @@ export function ScannerResults({
             />
           </div>
         )}
+
         {/* Whale Stats */}
         <div className="xl:col-span-2 md:col-span-2">
           <WhaleStatsDashboard

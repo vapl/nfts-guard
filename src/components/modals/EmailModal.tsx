@@ -117,8 +117,6 @@ export default function EmailModal({ isOpen, onClose, onSubmit }: Props) {
         console.error("❌ Update error:", updateErr.message);
       }
 
-      console.log("Updated row:", updated);
-
       // 4. Ja update nenostrādāja — veido jaunu rindu
       if (!updated || updated.length === 0) {
         const { error: insertErr } = await supabase.from("scan_usage").insert({
@@ -141,8 +139,6 @@ export default function EmailModal({ isOpen, onClose, onSubmit }: Props) {
           return;
         }
       }
-
-      console.log("Updated row:", updated);
 
       // 5. Sūti verifikācijas e-pastu
       const response = await fetch("/api/send-verification", {

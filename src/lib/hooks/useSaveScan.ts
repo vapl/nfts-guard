@@ -28,8 +28,6 @@ export const useSaveScan = () => {
       contractAddress: string | null = null,
       durationMs: number = 0
     ) => {
-      console.log("🔥 saveScan called");
-
       const now = new Date().toISOString();
       const { fingerprint, userAgent } = await getClientInfo();
       const defaultFreeScans =
@@ -75,7 +73,6 @@ export const useSaveScan = () => {
 
         if (insert.error)
           console.error("❌ Insert error:", insert.error.message);
-        else console.log("✅ Inserted new scan usage row.");
       } else {
         const updates: ScanUsage = {
           last_scan_at: now,
@@ -115,8 +112,6 @@ export const useSaveScan = () => {
           console.error("❌ Failed to update scan usage:", error.message);
         } else if (!data || data.length === 0) {
           console.warn("⚠️ No rows updated!");
-        } else {
-          console.log("✅ Updated scan usage:", data[0]);
         }
       }
 
@@ -137,8 +132,6 @@ export const useSaveScan = () => {
 
       if (log.error) {
         console.error("❌ Log insert failed:", log.error.message);
-      } else {
-        console.log("📝 Log inserted");
       }
     },
     [checkScanAllowed]

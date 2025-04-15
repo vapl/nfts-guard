@@ -31,10 +31,6 @@ export async function getCollectionData(
   contractAddress: string,
   forceRefresh = false
 ) {
-  console.log(
-    `🔎 Checking for cached collection data in DB: ${contractAddress}`
-  );
-
   // ✅ Pārbauda, vai kolekcija jau ir DB un kad tā pēdējo reizi atjaunināta
   const { data: cachedCollection, error } = await supabase
     .from("nft_collections")
@@ -52,10 +48,6 @@ export async function getCollectionData(
   if (cachedCollection && cachedCollection.last_updated) {
     const lastUpdatedTimestamp = Math.floor(
       new Date(cachedCollection.last_updated).getTime() / 1000
-    );
-
-    console.log(
-      `📌 Last updated: ${new Date(lastUpdatedTimestamp * 1000).toISOString()}`
     );
 
     if (lastUpdatedTimestamp >= refreshThreshold) {

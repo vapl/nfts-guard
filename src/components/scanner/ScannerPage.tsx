@@ -164,7 +164,7 @@ export default function ScannerPage() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "ArrowDown") {
+    if (e.key === "ArrowDown" || e.key === "Tab") {
       e.preventDefault();
       setSelectedIndex((prev) =>
         prev < suggestions.length - 1 ? prev + 1 : 0
@@ -194,6 +194,7 @@ export default function ScannerPage() {
   }, [suggestions]);
 
   const handleScan = async () => {
+    setIsLoading(true);
     if (!contractInput || contractInput.trim() === "") {
       setMessageType("error");
       setMessage("Please enter a contract address.");
@@ -233,10 +234,10 @@ export default function ScannerPage() {
     }
 
     setHasScannedOnce(true);
-    setIsLoading(true);
     setResult(undefined);
     setMessage("");
     setMessageType("");
+    setSuggestions([]);
 
     try {
       const startTime = Date.now();

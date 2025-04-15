@@ -145,12 +145,6 @@ async function detectWashTrading(contractAddress: string, days: number = 30) {
     .slice(0, 5)
     .map(([wallet, count]) => ({ wallet, count }));
 
-  console.log(
-    `🚨 ${
-      suspiciousSales.length
-    } suspicious sales detected (Index: ${washTradingIndex.toFixed(2)})`
-  );
-
   // Store result in Supabase
   await supabase.from("nft_wash_trading_results").insert({
     contract_address: contractAddress,

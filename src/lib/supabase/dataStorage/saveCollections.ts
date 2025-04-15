@@ -48,16 +48,7 @@ export async function saveCollectionToSupabase(
       const isDifferent = isCollectionDataDifferent(existing, collectionData);
 
       if (isFresh && !isDifferent) {
-        console.log(
-          "✅ Collection data is fresh and unchanged. Skipping update."
-        );
         return;
-      }
-
-      if (isFresh && isDifferent) {
-        console.log(
-          "♻️ Collection is fresh but has changed. Proceeding to update."
-        );
       }
     }
 

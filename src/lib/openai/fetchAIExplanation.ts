@@ -25,11 +25,17 @@ export async function fetchSectionExplanation(
       }),
     });
 
-    if (!res.ok) throw new Error("Failed to fetch section explanations");
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error("❌ Section explanation failed:", errText);
+      return null;
+    }
+
     const data = await res.json();
+
     return data.explanations as { [key: string]: string };
   } catch (err) {
-    console.error("[fetchSectionExplanation]", err);
+    console.error("[fetchSectionExplanation] error:", err);
     return null;
   }
 }
@@ -41,27 +47,66 @@ export async function fetchScanSummary(
   try {
     const contractAddress = scanData.contractAddress;
 
-    // 1. Check if there's a valid cached summary
+    // 1. Try cached summary
     const resCache = await fetch(
       `/api/get-analysis?contractAddress=${contractAddress}`
     );
-    const cached = await resCache.json();
 
-    if (!cached?.error && cached.summary && !cached.requiresRefresh) {
-      return cached.summary;
+    if (
+      resCache.ok &&
+      resCache.headers.get("content-type")?.includes("application/json")
+    ) {
+      const cached = await resCache.json();
+
+      if (!cached?.error && cached.summary && !cached.requiresRefresh) {
+        let result = cached.summary;
+
+        // 🔍 Try to parse if looks like JSON object
+        if (typeof result === "string" && result.trim().startsWith("{")) {
+          try {
+            const parsed = JSON.parse(result);
+            if (parsed?.summary && typeof parsed.summary === "string") {
+              result = parsed.summary;
+            }
+          } catch {
+            // Ignore parse error
+          }
+        }
+
+        return result;
+      }
     }
 
-    // 2. If not valid or outdated, generate a new summary
+    // 2. If not cached or invalid – generate summary
     const res = await fetch("/api/generate-scan-summary", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ scanData }),
     });
 
-    if (!res.ok) throw new Error("Failed to generate scan summary");
-    const data = await res.json();
+    if (
+      !res.ok ||
+      !res.headers.get("content-type")?.includes("application/json")
+    ) {
+      console.error("❌ Unexpected response from /api/generate-scan-summary");
+      return null;
+    }
 
-    return data.summary ?? null;
+    const data = await res.json();
+    let result = data.summary ?? null;
+
+    if (typeof result === "string" && result.trim().startsWith("{")) {
+      try {
+        const parsed = JSON.parse(result);
+        if (parsed?.summary && typeof parsed.summary === "string") {
+          result = parsed.summary;
+        }
+      } catch {
+        // Leave as-is
+      }
+    }
+
+    return result;
   } catch (err) {
     console.error("[fetchScanSummary] error:", err);
     return null;

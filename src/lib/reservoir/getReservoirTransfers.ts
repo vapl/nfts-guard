@@ -53,9 +53,6 @@ export async function getNFTTransfers(
 
     // ✅ **Ja nav datu Supabase, lejupielādē visu periodu**
     if (!minData.length || !maxData.length) {
-      console.log(
-        `🔄 No transfers found in DB. Fetching full ${timePeriod}-day period.`
-      );
       await fetchAndSaveTransfers(
         contractAddress,
         requestedStartTimestamp,
@@ -76,12 +73,6 @@ export async function getNFTTransfers(
       new Date(maxData[0]?.timestamp).getTime() / 1000
     );
 
-    console.log(
-      `📌 Supabase data range: ${new Date(
-        dbOldestTimestamp * 1000
-      ).toISOString()} – ${new Date(dbNewestTimestamp * 1000).toISOString()}`
-    );
-
     let fetchStart: number | null = null;
     let fetchEnd: number | null = null;
 
@@ -89,11 +80,7 @@ export async function getNFTTransfers(
     if (dbOldestTimestamp >= requestedStartTimestamp) {
       fetchStart = requestedStartTimestamp;
       fetchEnd = dbOldestTimestamp - 1;
-      console.log(
-        `🔄 Fetching older transfers: ${new Date(
-          fetchStart * 1000
-        ).toISOString()} – ${new Date(fetchEnd * 1000).toISOString()}`
-      );
+
       await fetchAndSaveTransfers(contractAddress, fetchStart, fetchEnd);
     }
 
@@ -101,11 +88,7 @@ export async function getNFTTransfers(
     if (dbNewestTimestamp < nowTimestamp) {
       fetchStart = dbNewestTimestamp + 1;
       fetchEnd = nowTimestamp;
-      console.log(
-        `🔄 Fetching new transfers: ${new Date(
-          fetchStart * 1000
-        ).toISOString()} – ${new Date(fetchEnd * 1000).toISOString()}`
-      );
+
       await fetchAndSaveTransfers(contractAddress, fetchStart, fetchEnd);
     }
 
@@ -113,9 +96,6 @@ export async function getNFTTransfers(
       dbOldestTimestamp <= requestedStartTimestamp &&
       dbNewestTimestamp >= nowTimestamp
     ) {
-      console.log(
-        "✅ Supabase already contains the full requested period. No API calls needed."
-      );
       return await getCachedTransfers(
         contractAddress,
         requestedStartTimestamp,
@@ -199,10 +179,6 @@ async function fetchAndSaveTransfers(
 
       allNewTransfers.push(...uniqueNewTransfers);
 
-      console.log(
-        `✅ Fetched ${newTransfers.length} new transfers (Total: ${allNewTransfers.length})`
-      );
-
       await new Promise((resolve) => setTimeout(resolve, 1500));
     } catch (error) {
       console.error("❌ Error fetching transfers from API:", error);
@@ -214,9 +190,6 @@ async function fetchAndSaveTransfers(
     console.warn("⚠️ API did not return any transfers!");
   }
   if (allNewTransfers.length > 0) {
-    console.log(
-      `✅ Saving ${allNewTransfers.length} new transfers to Supabase.`
-    );
     await saveTransfersToSupabase(allNewTransfers);
   } else {
   }
@@ -266,9 +239,6 @@ async function getCachedTransfers(
       }
     }
 
-    console.log(
-      `✅ Returning ${allTransfers.length} cached transfers from Supabase.`
-    );
     return allTransfers;
   } catch (error) {
     console.error("❌ Error getting cached transfers:", error);
