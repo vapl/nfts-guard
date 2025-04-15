@@ -2,16 +2,16 @@ import { supabase } from "@/lib/supabase/supabase";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
-  const email = req.nextUrl.searchParams.get("email");
+  const token = req.nextUrl.searchParams.get("token");
 
-  if (!email) {
-    return NextResponse.redirect("/unsubscribe?error=missing_email");
+  if (!token) {
+    return NextResponse.redirect("/unsubscribe?error=missing_token");
   }
 
   const { error } = await supabase
     .from("subscribers")
     .update({ unsubscribed: true })
-    .eq("email", decodeURIComponent(email))
+    .eq("unsubscribe_token", token)
     .eq("is_verified", true);
 
   if (error) {

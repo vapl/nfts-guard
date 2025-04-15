@@ -41,17 +41,20 @@ export async function POST(req: Request) {
     // 3. Pārbauda, vai e-pasts jau eksistē
     const { data: existingSubscriber } = await supabase
       .from("subscribers")
-      .select("email")
+      .select("email, unsubscribe_token")
       .eq("email", trimmedEmail)
       .maybeSingle();
 
     const isNewSubscriber = !existingSubscriber;
+    const unsubscribeToken =
+      existingSubscriber?.unsubscribe_token || randomUUID();
 
     // 4. Atjaunina vai izveido subscriber ierakstu
     const { error: dbError } = await supabase.from("subscribers").upsert(
       {
         email: trimmedEmail,
         verification_code: code,
+        unsubscribe_token: unsubscribeToken,
         source: "scanner",
       },
       { onConflict: "email" }
@@ -86,7 +89,7 @@ export async function POST(req: Request) {
 
     // ✅ 8. Ja jauns — sūta arī welcome e-pastu
     if (isNewSubscriber) {
-      const subscribeHtml = generateSubscribeEmailContent();
+      const subscribeHtml = generateSubscribeEmailContent(unsubscribeToken);
       await resend.emails.send({
         from: "NFTs Guard Team <info@nftsguard.com>",
         to: trimmedEmail,

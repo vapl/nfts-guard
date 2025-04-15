@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { generateSubscribeEmailContent } from "@/utils/emailTemplate";
+import { randomUUID } from "crypto";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+
+const unsubscribeToken = randomUUID();
 
 export async function POST(req: Request) {
   try {
@@ -15,7 +18,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const emailContent = generateSubscribeEmailContent();
+    const emailContent = generateSubscribeEmailContent(unsubscribeToken);
 
     const response = await resend.emails.send({
       from: "NFTs Guard Team <info@nftsguard.com>",

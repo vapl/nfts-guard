@@ -1,4 +1,5 @@
-export const generateSubscribeEmailContent = () => {
+export const generateSubscribeEmailContent = (unsubscribeToken: string) => {
+  const unsubscribeLink = `https://nftsguard.com/api/unsubscribe?token=${unsubscribeToken}`;
   return `
    <div
       style="
@@ -312,7 +313,7 @@ export const generateSubscribeEmailContent = () => {
             color: #888;
             margin-top: 10px;
           "
-        >If you wish to stop receiving emails, you can <a href="https://nftsguard.com/api/unsubscribe?email=user%40domain.com" style="color:#aaa;text-decoration:underline;">unsubscribe here</a>.</p>
+        >If you wish to stop receiving emails, you can <a href="${unsubscribeLink}" style="color:#aaa;text-decoration:underline;">unsubscribe here</a>.</p>
 
       </div>
     </div>

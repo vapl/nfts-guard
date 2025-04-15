@@ -21,7 +21,7 @@ export default function UnsubscribePage() {
   }, [params]);
 
   return (
-    <div className="p-8 max-w-md mx-auto text-center">
+    <div className="flex flex-col w-full px-4 lg:px-16 xl:px-24 items-center justify-center min-h-screen">
       <h1 className="text-2xl font-bold mb-4">Unsubscribe</h1>
       <p className="text-paragraph text-gray-300">{message}</p>
     </div>

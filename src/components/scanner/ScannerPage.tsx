@@ -194,7 +194,6 @@ export default function ScannerPage() {
   }, [suggestions]);
 
   const handleScan = async () => {
-    setIsLoading(true);
     if (!contractInput || contractInput.trim() === "") {
       setMessageType("error");
       setMessage("Please enter a contract address.");
@@ -238,6 +237,7 @@ export default function ScannerPage() {
     setMessage("");
     setMessageType("");
     setSuggestions([]);
+    setIsLoading(true);
 
     try {
       const startTime = Date.now();
@@ -276,18 +276,9 @@ export default function ScannerPage() {
     setIsLoading(false);
   };
 
+  // === Email submit === //
   const handleEmailSubmit = async (email: string) => {
     const { ip, fingerprint, userAgent } = await getClientInfo();
-
-    const { data: existingSubscriber } = await supabase
-      .from("subscribers")
-      .select("email")
-      .eq("email", email)
-      .maybeSingle();
-
-    if (!existingSubscriber) {
-      await supabase.from("subscribers").insert({ email });
-    }
 
     await supabase
       .from("scan_usage")
