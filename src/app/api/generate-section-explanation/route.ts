@@ -1,10 +1,10 @@
-export const config = {
-  runtime: "nodejs", // ← tas šeit risina 504 timeout problēmu
-};
-
 import { NextResponse } from "next/server";
 import openai from "@/lib/openai/openaiClient";
 import { generateExplanationPrompt } from "@/lib/helpers/generateExplanationPrompt";
+
+export const config = {
+  runtime: "nodejs", // ← tas šeit risina 504 timeout problēmu
+};
 
 export interface ScanCardData {
   title: string;

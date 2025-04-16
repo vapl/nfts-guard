@@ -47,4 +47,7 @@ export const defaultMetadata: Metadata = {
   authors: [{ name: "NFTs Guard Team", url: "https://nftsguard.com" }],
   creator: "NFTs Guard",
   publisher: "NFTs Guard",
+  alternates: {
+    canonical: "https://nftsguard.com/en",
+  },
 };

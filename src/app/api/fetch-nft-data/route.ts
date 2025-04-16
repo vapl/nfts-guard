@@ -10,6 +10,10 @@ import { upsertHolderDistribution } from "@/lib/supabase/helpers/upsertHolderDis
 import { calculateSafetyScore } from "@/lib/analysis/calculateSafetyScore";
 import { upsertAnalysis } from "@/lib/supabase/helpers/upsertAnalysis";
 
+export const config = {
+  runtime: "nodejs",
+};
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
