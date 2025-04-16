@@ -34,14 +34,8 @@ export function generateScanCards({
   return [
     {
       title: "Rug Pull Risk",
-      value: `${rugPullAnalysis?.risk_level ?? "N/A"}`,
+      value: `${rugPullAnalysis?.rug_pull_percent ?? 0}%`,
       details: [
-        // {
-        //   label: "Whale Drop",
-        //   value: `${Number(rugPullAnalysis?.whale_drop_percent ?? 0).toFixed(
-        //     2
-        //   )}%`,
-        // },
         {
           label: "Seller/Buyer Ratio",
           value: rugPullAnalysis?.seller_to_buyer_ratio ?? "N/A",

@@ -218,17 +218,20 @@ export default function ScannerPage() {
     setMessage("");
     setMessageType("");
     setSuggestions([]);
+    setIsLoading(true);
 
     const result = await checkScanAllowed();
     if (result.emailUnverified) {
       setMessageType("error");
       setMessage("Please verify your email.");
       clearMessageAfterDelay();
+      setIsLoading(false);
       return;
     }
 
     if (!result.allowed) {
       if (result.emailRequired && !result.emailUnverified) {
+        setIsLoading(false);
         setShowEmailModal(true);
       } else {
         setMessageType("error");
@@ -237,7 +240,6 @@ export default function ScannerPage() {
       }
       return;
     }
-    setIsLoading(true);
 
     try {
       const startTime = Date.now();

@@ -221,7 +221,7 @@ export function ScannerResults({
             <li className="bg-card drop-shadow-lg p-2 rounded-lg border border-gray-300 dark:border-gray-700">
               Top Bid:{" "}
               <span className="font-semibold">
-                {collectionData.top_bid?.toFixed(3)} Ξ
+                {collectionData.top_bid?.toFixed(3) ?? "-"} Ξ
               </span>
             </li>
             <li className="bg-card drop-shadow-lg p-2 rounded-lg border border-gray-300 dark:border-gray-700">

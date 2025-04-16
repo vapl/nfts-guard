@@ -151,6 +151,7 @@ export interface RugPullResult {
   unique_sellers: number;
   unique_buyers: number;
   seller_to_buyer_ratio: string;
+  rug_pull_percent: number;
 }
 
 export interface ScannerResultsProps {
