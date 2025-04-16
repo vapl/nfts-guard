@@ -213,6 +213,12 @@ export default function ScannerPage() {
       return;
     }
 
+    setHasScannedOnce(true);
+    setResult(undefined);
+    setMessage("");
+    setMessageType("");
+    setSuggestions([]);
+
     const result = await checkScanAllowed();
     if (result.emailUnverified) {
       setMessageType("error");
@@ -231,12 +237,6 @@ export default function ScannerPage() {
       }
       return;
     }
-
-    setHasScannedOnce(true);
-    setResult(undefined);
-    setMessage("");
-    setMessageType("");
-    setSuggestions([]);
     setIsLoading(true);
 
     try {

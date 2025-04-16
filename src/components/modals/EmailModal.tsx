@@ -108,7 +108,6 @@ export default function EmailModal({ isOpen, onClose, onSubmit }: Props) {
           user_agent: userAgent,
           free_scans_left: freeScans - 1,
           free_scans_reset_at: new Date().toISOString().split("T")[0],
-          free_scan_used: true,
         })
         .eq("ip_address", ip)
         .select("*");
@@ -126,7 +125,6 @@ export default function EmailModal({ isOpen, onClose, onSubmit }: Props) {
           user_agent: userAgent,
           paid_scans_left: 0,
           free_scans_left: freeScans - 1,
-          free_scan_used: true,
           free_scans_reset_at: new Date().toISOString().split("T")[0],
           total_scans: 0,
           last_scan_at: null,

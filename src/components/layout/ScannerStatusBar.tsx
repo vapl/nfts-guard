@@ -159,8 +159,7 @@ export default function ScanStatusBar() {
           </p>
         ) : timeLeft !== "" ? (
           <p className="text-sm text-white text-center">
-            Your scan limit is reached. New scans available at{" "}
-            <strong>{resetClock}</strong>{" "}
+            All scans used. Come back tomorrow at <strong>{resetClock}</strong>{" "}
             <span className="opacity-70 text-sm">({timeLeft})</span>
           </p>
         ) : null}

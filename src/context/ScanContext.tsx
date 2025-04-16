@@ -61,29 +61,28 @@ export const ScanLimiterProvider = ({
 
       let email: string | null = null;
 
-      // Get email and last scan date by IP
+      // 1. Sākumā mēģinām nolasīt no scan_usage
       const { data: usage } = await supabase
         .from("scan_usage")
-        .select("email, last_scan_at, free_scan_used, paid_scans_left")
+        .select("email, last_scan_at, paid_scans_left")
         .eq("ip_address", ip)
         .maybeSingle();
 
       setPaidScansLeft(usage?.paid_scans_left > 0);
 
-      // Check if scanned in the last 24h
+      // 2. Ja ir skenēts pēdējo 24h laikā — uzskatām par 'hasScannedOnce'
       if (usage?.last_scan_at) {
         const lastScan = new Date(usage.last_scan_at);
         const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-
         if (lastScan >= twentyFourHoursAgo) {
           setHasScannedOnce(true);
         }
       }
 
+      // 3. Ja ir e-pasts — pārbaudām verifikāciju
       if (usage?.email) {
         email = usage.email;
 
-        // Optionally set emailUnverified for local state — informative only
         const { data: subscriber } = await supabase
           .from("subscribers")
           .select("is_verified")
@@ -92,14 +91,27 @@ export const ScanLimiterProvider = ({
 
         setEmailUnverified(!subscriber?.is_verified);
       } else {
-        setEmailUnverified(false); // nav e-pasta ≠ nav jāverificē
+        setEmailUnverified(false);
       }
 
-      if (!hasScannedOnce && usage?.free_scan_used) {
-        setHasScannedOnce(true);
+      // ✅ 4. Pārbaudām arī anonīmo tabulu, ja nav `hasScannedOnce`
+      if (!hasScannedOnce) {
+        const { data: anon } = await supabase
+          .from("scan_usage_anon")
+          .select("scanned_at")
+          .eq("ip_address", ip)
+          .maybeSingle();
+
+        if (anon?.scanned_at) {
+          const anonScan = new Date(anon.scanned_at);
+          const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+          if (anonScan >= twentyFourHoursAgo) {
+            setHasScannedOnce(true);
+          }
+        }
       }
 
-      // Ask backend for scan status
+      // 5. Vaicājam backendam reālo statusu
       const res = await fetch("/api/scan-limit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -108,11 +120,15 @@ export const ScanLimiterProvider = ({
 
       const data = await res.json();
 
-      // Save state
+      // 6. Atjaunojam kontekstu
       setScansLeft(Math.max(data.scansLeft ?? 0, 0));
       setResetTime(data.resetTime ?? null);
       setEmailRequired(data.emailRequired);
       setEmailUnverified(data.emailUnverified);
+
+      if (!hasScannedOnce && data.allowed) {
+        setHasScannedOnce(true);
+      }
 
       return {
         allowed: data.allowed,
