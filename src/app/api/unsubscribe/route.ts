@@ -5,7 +5,9 @@ export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get("token");
 
   if (!token) {
-    return NextResponse.redirect("/unsubscribe?error=missing_token");
+    return NextResponse.redirect(
+      new URL("/unsubscribe?error=missing_token", req.url)
+    );
   }
 
   const { error } = await supabase
@@ -15,9 +17,11 @@ export async function GET(req: NextRequest) {
     .eq("is_verified", true);
 
   if (error) {
-    console.error("❌ Failed to unsubscribe:", error);
-    return NextResponse.redirect("/unsubscribe?error=server_error");
+    console.error("❌ Failed to unsubscribe:", error.message);
+    return NextResponse.redirect(
+      new URL("/unsubscribe?error=server_error", req.url)
+    );
   }
 
-  return NextResponse.redirect("/unsubscribe?success=true");
+  return NextResponse.redirect(new URL("/unsubscribe?success=true", req.url));
 }
