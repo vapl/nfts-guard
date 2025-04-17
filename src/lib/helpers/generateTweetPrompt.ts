@@ -12,10 +12,12 @@ export interface TweetInput {
 export function generateTweetPrompt(input: TweetInput): string {
   const {
     volumeEth,
+    holdersCount,
     listedPercent,
     collectionName,
     safetyScore,
     washTrading,
+    whaleRisk,
     rugPullRisk,
   } = input;
 
@@ -28,29 +30,31 @@ export function generateTweetPrompt(input: TweetInput): string {
   });
 
   return `
-  You are a Web3 degen NFT pro. Your job is to generate a short, hype-style tweet (max 280 characters) summarizing this NFT scan result.
-  
-  Collection: ${collectionName}
-  Status: ${status}
-  Volume: ${volumeEth} ETH
-  Listed: ${listedPercent}%
-  Safety Score: ${safetyScore}
-  Wash Trading: ${washTrading}%
-  Rug Pull Risk: ${rugPullRisk}
-  
-  Your tweet MUST:
-  - Start with: ${status}
-  - Include 1 short sentence of degen-style insight based on volume, listings, or risks (e.g. “Clean metrics ✅ but low volume 👀”)
-  - Mention 1–2 emojis in the middle
-  - End with: “Scan before you ape. Try @NFTsGuard 🔍”
-  - Use 2–3 hashtags: #NFTs #Web3 #DYOR #NFTCommunity #RugPull
-  
-  ⚠️ Return ONLY the tweet text, no explanations or extra comments.
-  ⚠️ Do NOT write like a customer support agent.
-  ⚠️ Use casual, bold Web3-native voice, like you're tweeting to fellow NFT degens.
-  
-  Max length: 280 characters.
-    `.trim();
+You are an edgy Web3 degen NFT pro. Write a short, hype-style tweet (max 280 characters) summarizing this NFT scan result.
+
+Collection: ${collectionName}
+Status: ${status}
+Volume: ${volumeEth} ETH
+Holders: ${holdersCount}
+Listed: ${listedPercent}%
+Safety Score: ${safetyScore}
+Wash Trading: ${washTrading}%
+Rug Pull Risk: ${rugPullRisk}
+Whale Risk: ${whaleRisk}
+
+Your tweet MUST:
+- Start with: ${status}
+- Include 1 bold insight based on volume, listings, or risks (e.g. “Clean metrics ✅ but low volume 👀”)
+- Use 1–2 emojis mid-sentence to break monotony
+- Add 1 line of opinion (“Don’t fade it”, “Decent play”, etc.)
+- End with: “Scan before you ape. Try @NFTsGuard 🔍”
+- Use 2–3 hashtags (e.g. #NFTs #Web3 #DYOR)
+
+⚠️ Return ONLY the tweet text. No explanation or summary.
+⚠️ Use confident, degen, informal tone. No customer service talk.
+
+Max 280 characters.
+`.trim();
 }
 
 function classifyStatus({
@@ -67,13 +71,13 @@ function classifyStatus({
   washTrading: number;
 }): string {
   if (
-    safetyScore > 80 &&
-    volumeEth > 10 &&
+    safetyScore > 90 &&
+    volumeEth > 20 &&
     listedPercent < 10 &&
     rugPullRisk === "Low" &&
     washTrading < 10
   ) {
-    return "Still alive 🔥";
+    return "🔥 Pumping";
   }
 
   if (volumeEth < 1 && listedPercent > 60) return "Dead 💀";
@@ -81,8 +85,8 @@ function classifyStatus({
   if (volumeEth < 5 && listedPercent > 50) return "Ghost town 👻";
 
   if (safetyScore < 40 || rugPullRisk === "High" || washTrading > 50) {
-    return "Sketchy ⚠️";
+    return "Sketchy 🚨";
   }
 
-  return "Still alive 🔥";
+  return "Still alive ✅";
 }
