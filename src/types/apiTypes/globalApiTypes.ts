@@ -117,8 +117,10 @@ export interface WhaleStats {
   avgHoldTime: number;
   avgVolatility: number;
   typeCounts: Record<string, number>;
+  typePercentages?: Record<string, number>;
   topWhale?: WhaleStatsTopWhale;
   activityLog: { date: string; eth: number }[];
+  accumulatingWhalePercent?: number;
 }
 
 export interface GetNFTWhaleActivityResult {
@@ -151,6 +153,7 @@ export interface RugPullResult {
   unique_sellers: number;
   unique_buyers: number;
   seller_to_buyer_ratio: string;
+  rug_pull_percent: number;
 }
 
 export interface ScannerResultsProps {

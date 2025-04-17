@@ -144,17 +144,17 @@ const NewsletterSection: React.FC<NewsletterProps> = ({
           iconLeft={<MdEmail size={24} className="ml-2" />}
           onChange={(e) => setEmail(e.target.value)}
         />
+        {messageType && (
+          <p
+            className={`mt-2 text-sm font-medium ${
+              messageType === "success" ? "text-green-400" : "text-red-400"
+            }`}
+          >
+            {message}
+          </p>
+        )}
         <Button label={ctaText} onClick={handleSubscribe} />
       </motion.div>
-      {messageType && (
-        <p
-          className={`mt-2 text-sm font-medium ${
-            messageType === "success" ? "text-green-400" : "text-red-400"
-          }`}
-        >
-          {message}
-        </p>
-      )}
     </section>
   );
 };

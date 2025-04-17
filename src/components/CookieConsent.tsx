@@ -51,13 +51,13 @@ export default function CookieConsent() {
       <div className="mt-4 flex justify-end gap-3">
         <button
           onClick={declineCookies}
-          className="px-4 py-2 rounded-md border border-gray-600 text-sm hover:bg-gray-800 transition"
+          className="px-4 py-2 rounded-md border border-gray-600 text-sm hover:bg-gray-800 transition cursor-pointer"
         >
           Decline
         </button>
         <button
           onClick={acceptCookies}
-          className="px-4 py-2 rounded-md bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium transition"
+          className="px-4 py-2 rounded-md bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium transition cursor-pointer"
         >
           Accept
         </button>

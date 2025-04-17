@@ -29,7 +29,7 @@ const Button: React.FC<ButtonProps> = ({
   onMouseLeave,
 }) => {
   const baseClasses =
-    "px-6 py-3 rounded-lg font-semibold transition whitespace-nowrap z-10 flex items-center justify-center gap-2";
+    "px-6 py-3 rounded-lg font-semibold transition whitespace-nowrap z-10 flex items-center justify-center gap-2 active:scale-95";
 
   const styleClasses =
     style === "primary"
@@ -37,7 +37,9 @@ const Button: React.FC<ButtonProps> = ({
       : "border border-gray-500 text-gray-700 dark:text-gray-200 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800";
 
   const disabledClasses =
-    disabled || isLoading ? "cursor-not-allowed opacity-50" : "cursor-pointer";
+    disabled || isLoading
+      ? "cursor-not-allowed opacity-50 pointer-events-none"
+      : "cursor-pointer";
 
   // ✅ Ja animate true, iestata noklusējuma animāciju
   const motionAnimate = animate ? { scale: [1, 1.05, 1] } : undefined;
@@ -51,7 +53,7 @@ const Button: React.FC<ButtonProps> = ({
 
   return (
     <motion.button
-      onClick={onClick}
+      onClick={isLoading || disabled ? undefined : onClick}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       disabled={isLoading}

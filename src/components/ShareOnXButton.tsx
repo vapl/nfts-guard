@@ -23,6 +23,9 @@ export const ShareOnXButton = ({
 
   const handleShare = async () => {
     setLoading(true);
+
+    const win = window.open("", "_blank");
+
     const tweet = await fetchAIGeneratedTweet({
       collectionName,
       safetyScore,
@@ -35,7 +38,9 @@ export const ShareOnXButton = ({
     const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
       tweetWithUrl
     )}`;
-    window.open(tweetUrl, "_blank");
+
+    if (win) win.location.href = tweetUrl;
+
     setLoading(false);
   };
 

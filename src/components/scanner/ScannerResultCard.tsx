@@ -17,18 +17,26 @@ export function ScanResultCard({
   chart,
   tooltipInfo,
 }: ExtendedScanResultCardProps) {
+  const getVariantColor = (variant: string = "Neutral") => {
+    switch (variant) {
+      case "Dangerous":
+        return "rgb(var(--danger))";
+      case "Caution":
+        return "rgb(var(--warning))";
+      case "Secure":
+        return "rgb(var(--success))";
+      default:
+        return "rgb(var(--gray-light))";
+    }
+  };
+
   return (
     <>
       <div
         className={`relative bg-card rounded-xl p-6 drop-shadow-lg border
-    ]`}
+    `}
         style={{
-          borderColor:
-            variant === "Dangerous"
-              ? "rgb(var(--danger))"
-              : variant === "Coution"
-              ? "rgb(var(--warning))"
-              : "transparent",
+          borderColor: getVariantColor(variant),
         }}
       >
         <div className="flex justify-between w-full">
@@ -44,12 +52,7 @@ export function ScanResultCard({
               <div
                 className="mb-2 text-accent-purple h-6"
                 style={{
-                  color:
-                    variant === "Dangerous"
-                      ? "rgb(var(--danger))"
-                      : variant === "Caution"
-                      ? "rgb(var(--warning))"
-                      : "rgb(var(--success))",
+                  color: getVariantColor(variant),
                 }}
               >
                 {icon}
@@ -59,12 +62,7 @@ export function ScanResultCard({
               <div
                 className="mb-2"
                 style={{
-                  color:
-                    variant === "Dangerous"
-                      ? "rgb(var(--danger))"
-                      : variant === "Caution"
-                      ? "rgb(var(--warning))"
-                      : "rgb(var(--success))",
+                  color: getVariantColor(variant),
                 }}
               >
                 {variant}
@@ -74,13 +72,9 @@ export function ScanResultCard({
         </div>
         {highlight && (
           <span
-            className={`inline-block mt-1 text-sm font-semibold px-3 py-1 rounded-full bg-red-600 ${
-              variant === "Dangerous"
-                ? "bg-red-600"
-                : variant === "Caution"
-                ? "bg-yellow-600"
-                : "bg-green-600"
-            }`}
+            className={`inline-block mt-1 text-sm font-semibold px-3 py-1 rounded-full bg-red-600 ${getVariantColor(
+              variant
+            )}`}
           >
             {highlight}
           </span>

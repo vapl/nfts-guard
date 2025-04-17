@@ -13,6 +13,15 @@ export const RISK_RULES = {
     },
   },
 
+  rugPullPercentWeights: {
+    whaleDrop: 25,
+    floorDrop: 20,
+    largeTransfers: 15,
+    sellerToBuyerRatio: 15,
+    fewSellers: 12.5,
+    fewBuyers: 12.5,
+  },
+
   washTrading: {
     highThreshold: 50, // %
     mediumThreshold: 20, // %

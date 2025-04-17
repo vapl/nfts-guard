@@ -15,46 +15,44 @@ export function calculateSafetyScore(params: {
   const weights = RISK_RULES.safetyScoreWeights;
   const score = 100;
 
-  // 🚫 Penalize for insufficient market data
   const isDataSparse =
     (params.salesCount ?? 0) === 0 ||
     (params.uniqueBuyers ?? 0) === 0 ||
     (params.uniqueSellers ?? 0) === 0;
-  const sparseDataPenalty = isDataSparse ? 20 : 0;
 
-  // 🧨 Rug pull impact
-  const rugPullPenalty =
-    params.rugPullRiskLevel === "High"
-      ? 100 * weights.rugPull
-      : params.rugPullRiskLevel === "Medium"
-      ? 50 * weights.rugPull
-      : 0;
+  const sparseDataPenalty = isDataSparse ? 25 : 0;
 
-  // 🔁 Wash trading impact
+  const rugPullPenalty = {
+    High: 100 * weights.rugPull,
+    Medium: 50 * weights.rugPull,
+    Low: 0,
+    Uncertain: 20 * weights.rugPull,
+    "N/A": 10 * weights.rugPull,
+  }[params.rugPullRiskLevel];
+
   const washTradingPenalty =
     params.washTradingIndex > RISK_RULES.washTrading.highThreshold
       ? 100 * weights.washTrading
       : params.washTradingIndex > RISK_RULES.washTrading.mediumThreshold
       ? 50 * weights.washTrading
       : params.washTradingIndex < 5
-      ? -5 // ✅ Bonus for clean market
+      ? -10
       : 0;
 
-  // 🐋 Whale dump impact
   const whaleDumpPenalty =
     params.whaleDumpPercent && params.whaleDumpPercent > 30
       ? 100 * weights.whaleDump
+      : params.whaleDumpPercent && params.whaleDumpPercent > 15
+      ? 50 * weights.whaleDump
       : 0;
 
-  // 💧 Liquidity risk
   const liquidityPenalty =
-    params.liquidityRatio && params.liquidityRatio < 0.3
+    params.liquidityRatio !== undefined && params.liquidityRatio >= 1
       ? 100 * weights.liquidity
-      : params.liquidityRatio && params.liquidityRatio < 0.5
+      : params.liquidityRatio !== undefined && params.liquidityRatio >= 0.75
       ? 50 * weights.liquidity
       : 0;
 
-  // 📉 Floor price drop
   const floorDropPenalty =
     params.floorDropPercent && params.floorDropPercent < -50
       ? 100 * weights.floorPrice
@@ -62,17 +60,16 @@ export function calculateSafetyScore(params: {
       ? 50 * weights.floorPrice
       : 0;
 
-  // 📊 Volatility risk
-  const volatilityPenalty =
-    params.volatilityRiskLevel === "High"
-      ? 100 * weights.volatility
-      : params.volatilityRiskLevel === "Medium"
-      ? 50 * weights.volatility
-      : 0;
+  const volatilityPenalty = {
+    High: 100 * weights.volatility,
+    Medium: 50 * weights.volatility,
+    Low: 0,
+  }[params.volatilityRiskLevel ?? "Low"];
 
-  // 🟢 Positive signal: whale accumulation
   const whaleAccumulationBonus =
-    params.accumulatingWhalePercent && params.accumulatingWhalePercent > 15
+    params.accumulatingWhalePercent && params.accumulatingWhalePercent > 25
+      ? 10
+      : params.accumulatingWhalePercent && params.accumulatingWhalePercent > 15
       ? 5
       : 0;
 
@@ -85,10 +82,16 @@ export function calculateSafetyScore(params: {
     volatilityPenalty +
     sparseDataPenalty;
 
-  const finalScore = Math.max(
-    0,
-    Math.min(100, score - totalPenalty + whaleAccumulationBonus)
-  );
+  let finalScore = score - totalPenalty + whaleAccumulationBonus;
 
-  return finalScore;
+  // Aizsardzība: ja likviditāte ir 100% un nav neviena pirkuma — ļoti aizdomīgi
+  if (
+    params.liquidityRatio !== undefined &&
+    params.liquidityRatio >= 1 &&
+    isDataSparse
+  ) {
+    finalScore = Math.min(finalScore, 30);
+  }
+
+  return Math.max(0, Math.min(100, finalScore));
 }

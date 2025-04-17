@@ -107,7 +107,7 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="text-center max-w-3xl mx-auto px-4"
+          className="text-center max-w-4xl mx-auto px-4"
         >
           <h2 className="text-5xl md:text-7xl font-extrabold leading-tight text-heading">
             <span className="text-accent-purple">NFTs Guard</span> is{" "}

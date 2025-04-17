@@ -90,10 +90,27 @@ export async function detectRugPull(
       risk = "Medium";
     }
 
-    // ✅ Saglabā datubāzē (ja nepieciešams)
+    // 5. Rug Pull risk percent (0–100%)
+    const W = RISK_RULES.rugPullPercentWeights;
+    let rug_pull_percent = 0;
+
+    if (risk !== "Uncertain") {
+      if (whaleDropPercent > R.high.whaleDrop) rug_pull_percent += W.whaleDrop;
+      if (floor_price_24h < R.high.floorDrop24h)
+        rug_pull_percent += W.floorDrop;
+      if (largeTransfers > R.high.largeTransfers)
+        rug_pull_percent += W.largeTransfers;
+      if (sellerToBuyerRatio > R.high.sellerToBuyerRatio)
+        rug_pull_percent += W.sellerToBuyerRatio;
+      if (uniqueSellers < 3) rug_pull_percent += W.fewSellers;
+      if (uniqueBuyers < 3) rug_pull_percent += W.fewBuyers;
+    }
+
+    rug_pull_percent = Math.min(rug_pull_percent, 100);
 
     return {
       risk_level: risk,
+      rug_pull_percent: Number(rug_pull_percent.toFixed(1)), // <- JAUNS LAUKS
       whale_drop_percent: Number(whaleDropPercent.toFixed(2)),
       floor_price_24h,
       floor_price_7d,
@@ -104,18 +121,7 @@ export async function detectRugPull(
       seller_to_buyer_ratio: sellerToBuyerRatio.toFixed(2),
     };
   } catch (error) {
-    console.error("❌ detectRugPull error:", error);
-
-    return {
-      risk_level: "Uncertain",
-      whale_drop_percent: 0,
-      floor_price_24h: 0,
-      floor_price_7d: 0,
-      floor_price_30d: 0,
-      unique_sellers: 0,
-      unique_buyers: 0,
-      large_transfers: 0,
-      seller_to_buyer_ratio: "0",
-    };
+    console.error("Error detecting rug pull:", error);
+    throw new Error("Failed to detect rug pull");
   }
 }

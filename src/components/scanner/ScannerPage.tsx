@@ -213,16 +213,25 @@ export default function ScannerPage() {
       return;
     }
 
+    setHasScannedOnce(true);
+    setResult(undefined);
+    setMessage("");
+    setMessageType("");
+    setSuggestions([]);
+    setIsLoading(true);
+
     const result = await checkScanAllowed();
     if (result.emailUnverified) {
       setMessageType("error");
       setMessage("Please verify your email.");
       clearMessageAfterDelay();
+      setIsLoading(false);
       return;
     }
 
     if (!result.allowed) {
       if (result.emailRequired && !result.emailUnverified) {
+        setIsLoading(false);
         setShowEmailModal(true);
       } else {
         setMessageType("error");
@@ -231,13 +240,6 @@ export default function ScannerPage() {
       }
       return;
     }
-
-    setHasScannedOnce(true);
-    setResult(undefined);
-    setMessage("");
-    setMessageType("");
-    setSuggestions([]);
-    setIsLoading(true);
 
     try {
       const startTime = Date.now();
