@@ -13,8 +13,6 @@ export function generateWhaleStats(
   whaleData: NFTWhaleActivityProps[],
   totalWhales: number
 ): WhaleStats {
-  // const totalWhales = whaleData.length;
-
   let totalBuys = 0;
   let totalSells = 0;
   let totalTransfers = 0;
@@ -55,6 +53,15 @@ export function generateWhaleStats(
     }
   }
 
+  // ✅ Aprēķinām procentus no kopējā vaļu skaita
+  const typePercentages: Record<string, number> = {};
+  for (const [type, count] of Object.entries(typeCounts)) {
+    typePercentages[type] =
+      totalWhales > 0
+        ? parseFloat(((count / totalWhales) * 100).toFixed(2))
+        : 0;
+  }
+
   return {
     activityLog: [],
     totalWhales,
@@ -69,6 +76,7 @@ export function generateWhaleStats(
       ? parseFloat((totalVolatility / volatilityCount).toFixed(4))
       : 0,
     typeCounts,
+    typePercentages, // ✅ JAUNS LAUKS
     topWhale,
   };
 }

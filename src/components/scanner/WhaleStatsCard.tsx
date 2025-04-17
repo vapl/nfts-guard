@@ -14,7 +14,6 @@ import "react-calendar-heatmap/dist/styles.css";
 import { WhaleStats } from "@/types/apiTypes/globalApiTypes";
 import { useMemo } from "react";
 import TooltipInfo from "../tooltips/TooltipInfo";
-// import TopWhaleRadar from "../charts/TopWhaleRadar";
 
 interface WhaleStatsDashboardProps {
   stats: WhaleStats;
@@ -27,12 +26,18 @@ export const WhaleStatsDashboard: React.FC<WhaleStatsDashboardProps> = ({
   stats,
   tooltipInfo,
 }) => {
-  const pieData = Object.entries(stats.typeCounts || {}).map(
-    ([type, count]) => ({
+  const pieData = useMemo(() => {
+    return Object.entries(stats.typeCounts || {}).map(([type, count]) => ({
       name: type,
       value: count,
-    })
-  );
+      percent:
+        stats.typePercentages?.[type] !== undefined
+          ? stats.typePercentages[type]
+          : stats.totalWhales > 0
+          ? (count / stats.totalWhales) * 100
+          : 0,
+    }));
+  }, [stats]);
 
   const timeSeriesData = useMemo(() => {
     if (!Array.isArray(stats.activityLog)) return [];
@@ -54,71 +59,45 @@ export const WhaleStatsDashboard: React.FC<WhaleStatsDashboardProps> = ({
         <h4 className="text-paragraph text-sm mb-1">
           Whale Statistics Overview
         </h4>
-
         <TooltipInfo content={tooltipInfo} />
       </div>
       <div className="text-2xl font-bold text-heading">
         Total{" "}
-        {
-          <span className="text-accent-purple font-bold">
-            {stats.totalWhales || "N/A"}
-          </span>
-        }{" "}
+        <span className="text-accent-purple font-bold">
+          {stats.totalWhales || "N/A"}
+        </span>{" "}
         Whales
       </div>
 
       <ul className="flex flex-wrap mt-4 text-paragraph gap-5">
-        <li className="flex flex-col justify-end">
-          <span className="flex text-xs text-wrap pb-0.5 border-b-1 min-h-10 items-end border-gray-600">
-            Total Buys
-          </span>
-          <span className="text-md text-paragraph font-semibold text-nowrap">
-            {stats.totalBuys || "N/A"}
-          </span>
-        </li>
-        <li className="flex flex-col justify-end">
-          <span className="flex text-xs text-wrap pb-0.5 border-b-1 min-h-10 items-end border-gray-600">
-            Total Sells
-          </span>
-          <span className="text-md text-paragraph font-semibold text-nowrap">
-            {stats.totalSells || "N/A"}
-          </span>
-        </li>
-        <li className="flex flex-col justify-end">
-          <span className="flex text-xs text-wrap pb-0.5 border-b-1 min-h-10 items-end border-gray-600">
-            Total Transfers:
-          </span>
-          <span className="text-md text-paragraph font-semibold text-nowrap">
-            {stats.totalTransfers || "N/A"}
-          </span>
-        </li>
-        <li className="flex flex-col justify-end">
-          <span className="flex text-xs text-wrap pb-0.5 border-b-1 min-h-10 items-end border-gray-600">
-            Total ETH Spent:
-          </span>
-          <span className="text-md text-paragraph font-semibold text-nowrap">
-            {stats.totalEthSpent.toFixed(3) || "N/A"}
-          </span>
-        </li>
-        <li className="flex flex-col justify-end">
-          <span className="flex text-xs text-wrap pb-0.5 border-b-1 min-h-10 items-end border-gray-600">
-            Avg. Hold Days:
-          </span>
-          <span className="text-md text-paragraph font-semibold text-nowrap">
-            {stats.avgHoldTime || "N/A"}
-          </span>
-        </li>
-        <li className="flex flex-col justify-end">
-          <span className="flex text-xs text-wrap pb-0.5 border-b-1 min-h-10 items-end border-gray-600">
-            Avg. Volatility:
-          </span>
-          <span className="text-md text-paragraph font-semibold text-nowrap">
-            {stats.avgVolatility.toFixed(3) || "N/A"}
-          </span>
-        </li>
+        {[
+          { label: "Total Buys", value: stats.totalBuys },
+          { label: "Total Sells", value: stats.totalSells },
+          { label: "Total Transfers", value: stats.totalTransfers ?? "N/A" },
+          {
+            label: "Total ETH Spent:",
+            value: stats.totalEthSpent?.toFixed(3) ?? "N/A",
+          },
+          {
+            label: "Avg. Hold Days:",
+            value: stats.avgHoldTime ?? "N/A",
+          },
+          {
+            label: "Avg. Volatility:",
+            value: stats.avgVolatility?.toFixed(3) ?? "N/A",
+          },
+        ].map(({ label, value }) => (
+          <li key={label} className="flex flex-col justify-end">
+            <span className="flex text-xs text-wrap pb-0.5 border-b-1 min-h-10 items-end border-gray-600">
+              {label}
+            </span>
+            <span className="text-md text-paragraph font-semibold text-nowrap">
+              {value}
+            </span>
+          </li>
+        ))}
       </ul>
 
-      {/* Charts */}
       <div className="flex flex-col md:flex-row gap-3 mt-6 h-full">
         {pieData.length > 0 && (
           <div className="w-full md:w-2/5 bg-card p-6 rounded-2xl border border-gray-400 dark:border-gray-600">
@@ -152,14 +131,12 @@ export const WhaleStatsDashboard: React.FC<WhaleStatsDashboardProps> = ({
                   <div key={entry.name} className="flex items-center gap-2">
                     <div
                       className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                      style={{
+                        backgroundColor: COLORS[index % COLORS.length],
+                      }}
                     />
                     <span className="text-paragraph font-medium">
-                      {entry.name}:{" "}
-                      {((entry.value / (stats.totalWhales || 1)) * 100).toFixed(
-                        0
-                      )}
-                      %
+                      {entry.name}: {entry.percent.toFixed(1)}%
                     </span>
                   </div>
                 ))}
