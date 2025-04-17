@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
-export async function GET(req: NextRequest) {
+export async function GET(req: Request) {
   const ip =
-    req.headers.get("x-forwarded-for") ||
-    req.headers.get("x-real-ip") ||
-    "0.0.0.0";
+    req.headers.get("x-forwarded-for")?.split(",")[0] || // Netlify, Vercel
+    req.headers.get("x-real-ip") || // Nginx, custom proxy
+    "unknown";
 
   return new NextResponse(ip);
 }
