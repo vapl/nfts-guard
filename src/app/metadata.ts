@@ -22,7 +22,7 @@ export const defaultMetadata: Metadata = {
     siteName: "NFTs Guard",
     images: [
       {
-        url: "/og-image.png",
+        url: "https://nftsguard.com/og-image.png",
         width: 1200,
         height: 630,
         alt: "NFTs Guard Preview",
@@ -38,7 +38,7 @@ export const defaultMetadata: Metadata = {
       "Scan NFT collections for rug pulls, wash trading & scams. Free safety score in seconds.",
     site: "@nftsguard",
     creator: "@nftsguard",
-    images: ["/og-image.png"],
+    images: ["https://nftsguard.com/og-image.png"],
   },
   icons: {
     icon: "/favicon.ico",
