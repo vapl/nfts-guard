@@ -16,12 +16,12 @@ Drošības rīks NFT projektu pārbaudei. Projekts palīdz lietotājiem izvērt�
 - **Vercel** hostēšanai
  
 ## Kā palaist lokāli
-git clone https://github](https://github.com/vapl/nfts-guard.git
+git clone https://github.com/vapl/nfts-guard.git
 cd nfts-guard
 npm install
 npm run dev
 
-Pieejams: nftsguard.com
+Pieejams: https://www.nftsguard.com
 
 MVP pabeigts
 Tiek testēts...
