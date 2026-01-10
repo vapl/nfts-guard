@@ -78,6 +78,17 @@ const Footer = () => {
         <p className="text-gray-500 text-sm w-full text-center">
           &copy; {year} NFTs Guard. All rights reserved.
         </p>
+        <p className="text-gray-500 text-sm w-full text-center">
+          Design and development by{" "}
+          <a
+            className="text-gray-600 text-sm underline hover:text-purple-400"
+            href="http://vvcodes.dev"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Valdis Vascenkovs
+          </a>
+        </p>
 
         {/* 🟣 Sociālie tīkli apakšā tikai uz mazajiem ekrāniem */}
         <div className="lg:hidden flex">
