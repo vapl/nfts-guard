@@ -2,8 +2,6 @@ import "@/app/globals.css";
 import { Michroma, Geist, Geist_Mono } from "next/font/google";
 import { defaultMetadata } from "@/app/metadata";
 import { ThemeProvider } from "next-themes";
-
-import { LayoutProps } from "@/types/layout";
 import Script from "next/script";
 import { GA_TRACKING_ID } from "@/lib/gtag";
 import CookieConsent from "@/components/CookieConsent";
@@ -28,12 +26,14 @@ const michroma = Michroma({
 
 export const metadata = defaultMetadata;
 
-export default async function RootLayout({ children, params }: LayoutProps) {
-  const { locale } = await params;
-
+export default async function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html
-      lang={locale}
+      lang="en"
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} ${michroma.variable}`}
     >
